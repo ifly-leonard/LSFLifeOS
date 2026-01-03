@@ -78,7 +78,7 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
             Want to fork this app?
           </p>
           <a
-            href="https://github.com/ifly-leonard/LSFLifeOS"
+            href="https://github.com/ifly-leonard/DietOS"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wide text-primary hover:opacity-80 transition-opacity"

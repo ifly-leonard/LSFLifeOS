@@ -6,9 +6,9 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'LSF LifeOS',
+  title: 'DietOS',
   description: 'Mobile-first PWA for meal planning and diet management - Designed for Leonard Selvaraja Fernando',
-  generator: 'LSF LifeOS',
+  generator: 'DietOS',
   manifest: '/manifest.json',
   icons: {
     icon: [

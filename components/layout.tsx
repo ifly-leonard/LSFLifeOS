@@ -33,7 +33,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
             className="h-8 w-auto"
             priority
           />
-          <span className="text-2xl font-bold tracking-tighter uppercase italic">LSF Life OS</span>
+          <span className="text-2xl font-bold tracking-tighter [font-variant:small-caps]">Diet OS</span>
         </div>
         <span className="text-[10px] text-muted-foreground uppercase font-medium tracking-widest">v1.0.0</span>
       </header>

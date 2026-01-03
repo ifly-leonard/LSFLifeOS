@@ -11,6 +11,6 @@
   </style>
   <rect class="background" width="180" height="180" />
   <g transform="translate(90, 90)">
-    <text class="foreground" font-family="Arial, sans-serif" font-size="72" font-weight="bold" text-anchor="middle" dominant-baseline="central">LSF</text>
+    <text class="foreground" font-family="Arial, sans-serif" font-size="56" font-weight="bold" text-anchor="middle" dominant-baseline="central">DietOS</text>
   </g>
 </svg>

@@ -26,7 +26,7 @@ Before you begin, ensure you have the following installed:
 
 ```bash
 git clone <your-repository-url>
-cd LSFLifeOS
+cd DietOS
 ```
 
 ### 2. Install Dependencies
@@ -482,7 +482,7 @@ You can use this structure to manually convert ChatGPT's output:
 ## Project Structure
 
 ```
-LSFLifeOS/
+DietOS/
 ├── app/                    # Next.js app directory
 │   ├── globals.css        # Global styles
 │   ├── layout.tsx         # Root layout

@@ -13,7 +13,8 @@
       "targets": {
         "calories": 1850,
         "protein": 180
-      }
+      },
+      "timezone": "Asia/Kolkata"
     },
     "weeklyPlan": {
       "Monday": {

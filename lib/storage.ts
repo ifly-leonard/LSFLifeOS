@@ -97,9 +97,16 @@ function migrateDishState(state: DietOSState): DietOSState {
     disabled: dish.disabled ?? false,
   }))
 
+  // Ensure timezone is set (defaults to Asia/Kolkata if missing)
+  const migratedSettings = {
+    ...state.settings,
+    timezone: state.settings.timezone || "Asia/Kolkata",
+  }
+
   return {
     ...state,
     dishes: migratedDishes,
+    settings: migratedSettings,
   }
 }
 
@@ -172,10 +179,10 @@ export async function loadState(): Promise<DietOSState> {
 
   // If no state found, use default data
   if (!state) {
-    state = defaultData as DietOSState
+    state = defaultData as unknown as DietOSState
   }
 
-  // Apply migrations
+  // Apply migrations (this will ensure timezone is set)
   state = migrateDishState(state)
   state = cleanupDisabledDishesFromPlan(state)
 

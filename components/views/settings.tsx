@@ -20,85 +20,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 
-// Helper function to convert local time in a timezone to UTC
-function convertToUTC(localDate: Date, timezone: string): Date {
-  // Get the time string in the target timezone
-  const year = localDate.getFullYear()
-  const month = localDate.getMonth()
-  const date = localDate.getDate()
-  const hours = localDate.getHours()
-  const minutes = localDate.getMinutes()
-  
-  // Create a date string that represents this time in the target timezone
-  // We'll use Intl.DateTimeFormat to get the UTC equivalent
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  })
-  
-  // Create a date object representing the local time
-  const localTimeStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(date).padStart(2, "0")}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`
-  
-  // Use a trick: format the date in UTC, then calculate the difference
-  // Actually, simpler: create date in UTC, then use formatter to see what it would be in timezone
-  const testDate = new Date(`${year}-${String(month + 1).padStart(2, "0")}-${String(date).padStart(2, "0")}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00Z`)
-  
-  // Get what this UTC time would be in the target timezone
-  const parts = formatter.formatToParts(testDate)
-  const tzYear = parseInt(parts.find(p => p.type === "year")?.value || "0")
-  const tzMonth = parseInt(parts.find(p => p.type === "month")?.value || "0") - 1
-  const tzDate = parseInt(parts.find(p => p.type === "day")?.value || "0")
-  const tzHours = parseInt(parts.find(p => p.type === "hour")?.value || "0")
-  const tzMinutes = parseInt(parts.find(p => p.type === "minute")?.value || "0")
-  
-  // Calculate offset: if UTC time shows different values in timezone, adjust
-  const tzLocalDate = new Date(Date.UTC(tzYear, tzMonth, tzDate, tzHours, tzMinutes))
-  const offset = testDate.getTime() - tzLocalDate.getTime()
-  
-  // Apply offset to get UTC time
-  return new Date(testDate.getTime() - offset)
-}
-
-// Simpler approach: use the fact that we can create a date and format it
-function localTimeToUTC(year: number, month: number, date: number, hours: number, minutes: number, timezone: string): Date {
-  // Create a date string in ISO format
-  const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(date).padStart(2, "0")}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`
-  
-  // Create a date assuming it's in UTC
-  const utcDate = new Date(dateStr + "Z")
-  
-  // Get what this UTC time represents in the target timezone
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  })
-  
-  const tzParts = formatter.formatToParts(utcDate)
-  const tzYear = parseInt(tzParts.find(p => p.type === "year")?.value || "0")
-  const tzMonth = parseInt(tzParts.find(p => p.type === "month")?.value || "0") - 1
-  const tzDate = parseInt(tzParts.find(p => p.type === "day")?.value || "0")
-  const tzHours = parseInt(tzParts.find(p => p.type === "hour")?.value || "0")
-  const tzMinutes = parseInt(tzParts.find(p => p.type === "minute")?.value || "0")
-  
-  // Calculate the difference
-  const tzAsUTC = new Date(Date.UTC(tzYear, tzMonth, tzDate, tzHours, tzMinutes))
-  const offset = utcDate.getTime() - tzAsUTC.getTime()
-  
-  // The UTC time we want is the original UTC time minus the offset
-  return new Date(utcDate.getTime() - offset)
-}
 
 export function SettingsView({ state, updateState }: { state: DietOSState; updateState: (s: DietOSState) => void }) {
   const { toast } = useToast()
@@ -131,6 +52,16 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
   }
 
   const exportICS = (selectedDays: string[]) => {
+    // Validate selected days
+    if (selectedDays.length === 0) {
+      toast({
+        title: "No Days Selected",
+        description: "Please select at least one day to export",
+        variant: "destructive",
+      })
+      return
+    }
+
     const icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
@@ -140,45 +71,25 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
     ]
 
     const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    const today = new Date()
+    const now = new Date()
     const exportTimestamp = new Date().toISOString()
+    const dtstamp = now.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
     
-    // Find the Monday of the current week (or today if it's Monday)
-    // Use local time to determine what day it is for the user
-    // getDay() returns 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    const currentDayOfWeek = today.getDay()
-    // Calculate days to subtract to get to Monday of current week
-    // Sunday (0) -> add 1 to get next Monday
-    // Monday (1) -> use today (0 days)
-    // Tuesday-Saturday (2-6) -> subtract (dayOfWeek - 1) to get this week's Monday
-    let daysToMonday: number
-    if (currentDayOfWeek === 0) {
-      // Sunday: use next Monday
-      daysToMonday = 1
-    } else if (currentDayOfWeek === 1) {
-      // Monday: use today
-      daysToMonday = 0
-    } else {
-      // Tuesday-Saturday: go back to this week's Monday
-      daysToMonday = -(currentDayOfWeek - 1)
-    }
+    // Get current date in browser's local timezone
+    // JavaScript Date objects automatically use the browser's timezone
+    const currentDay = now.getDay() // 0=Sunday, 1=Monday, ..., 6=Saturday
     
-    // Calculate the Monday of the current week in local time, then convert to UTC
-    // This ensures we use the user's local week definition
-    const localWeekMonday = new Date(today)
-    localWeekMonday.setDate(today.getDate() + daysToMonday)
-    localWeekMonday.setHours(0, 0, 0, 0)
+    // Calculate Monday of current week
+    // If Sunday (0), use next Monday. Otherwise, go back to this week's Monday
+    const daysToMonday = currentDay === 0 ? 1 : currentDay === 1 ? 0 : -(currentDay - 1)
     
-    // Convert to UTC for ICS file (which uses UTC)
-    const weekMonday = new Date(Date.UTC(
-      localWeekMonday.getFullYear(),
-      localWeekMonday.getMonth(),
-      localWeekMonday.getDate(),
-      0, 0, 0, 0
-    ))
+    // Create Monday date object in browser timezone
+    const weekMonday = new Date(now)
+    weekMonday.setDate(now.getDate() + daysToMonday)
+    weekMonday.setHours(0, 0, 0, 0)
     
-    // Validate that weekMonday is actually a Monday (in UTC)
-    if (weekMonday.getUTCDay() !== 1) {
+    // Validate: weekMonday should be a Monday
+    if (weekMonday.getDay() !== 1) {
       console.error("Date calculation error: weekMonday is not a Monday!", weekMonday)
       toast({
         title: "Export Error",
@@ -188,13 +99,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
       return
     }
 
-<<<<<<< HEAD
-    // Process each day in the weekly plan
-    Object.keys(state.weeklyPlan).forEach((dayName) => {
-      const plan = state.weeklyPlan[dayName]
-      const targetDayIndex = daysOrder.indexOf(dayName)
-      if (targetDayIndex === -1) return
-=======
+    // Process each selected day
     selectedDays.forEach((day) => {
       const plan = state.weeklyPlan[day]
       if (!plan) return
@@ -205,20 +110,16 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
         return
       }
 
-      // Calculate the target date for this day ONCE, outside the meal loop
-      // This ensures all meals for the same day use the same date
-      // Use UTC methods to avoid timezone issues
-      const targetDate = new Date(Date.UTC(
-        weekMonday.getUTCFullYear(),
-        weekMonday.getUTCMonth(),
-        weekMonday.getUTCDate() + dayIndex,
-        0, 0, 0, 0
-      ))
+      // Calculate the target date for this day ONCE (outside meal loop)
+      // Store date components to prevent any mutation issues
+      const targetDate = new Date(weekMonday)
+      targetDate.setDate(weekMonday.getDate() + dayIndex)
+      targetDate.setHours(0, 0, 0, 0)
       
       // Validate the target date is correct
       const expectedDayOfWeek = dayIndex === 6 ? 0 : dayIndex + 1 // Sunday is 0, Monday is 1, etc.
-      if (targetDate.getUTCDay() !== expectedDayOfWeek) {
-        console.error(`Date calculation error for ${day}: expected day ${expectedDayOfWeek}, got ${targetDate.getUTCDay()}`, targetDate)
+      if (targetDate.getDay() !== expectedDayOfWeek) {
+        console.error(`Date calculation error for ${day}: expected day ${expectedDayOfWeek}, got ${targetDate.getDay()}`, targetDate)
         toast({
           title: "Date Calculation Error",
           description: `Error calculating date for ${day}. Please try again.`,
@@ -226,51 +127,90 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
         })
         return
       }
->>>>>>> 70de6f2 (Add dish disable feature with backward/forward compatibility and fix meal card width)
+      
+      // Validate date is reasonable (not in 2046 or past)
+      const currentYear = now.getFullYear()
+      const targetYear = targetDate.getFullYear()
+      if (targetYear < currentYear || targetYear > currentYear + 1) {
+        console.error(`Date out of range for ${day}: ${targetDate.toISOString()}`)
+        toast({
+          title: "Date Out of Range",
+          description: `Calculated date for ${day} is out of expected range. Please try again.`,
+          variant: "destructive",
+        })
+        return
+      }
 
-      Object.entries(plan).forEach(([mealType, dishId]) => {
+      // Store immutable date components to ensure all meals use the same date
+      // This prevents any potential mutation issues
+      const targetYearValue = targetDate.getFullYear()
+      const targetMonthValue = targetDate.getMonth()
+      const targetDateValue = targetDate.getDate()
+      
+      // Debug: Log the stored components
+      console.log(`[Export] ${day}: Stored date components - Year: ${targetYearValue}, Month: ${targetMonthValue + 1}, Date: ${targetDateValue}`)
+
+      // Process each meal for this day in explicit order to ensure consistency
+      // Use explicit meal order instead of Object.entries to guarantee order
+      const mealOrder: Array<keyof typeof plan> = ["breakfast", "lunch", "snack", "dinner"]
+      
+      mealOrder.forEach((mealType) => {
+        const dishId = plan[mealType]
+        if (!dishId) return
+        
         const dish = state.dishes.find((d) => d.id === dishId)
         if (!dish) return
 
-        const mealTime = state.settings.defaultMealTimes[mealType as keyof typeof state.settings.defaultMealTimes]
+        const mealTime = state.settings.defaultMealTimes[mealType]
         const [hours, minutes] = mealTime.split(":").map(Number)
+        
+        // Validate meal time before using it
+        if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+          console.error(`[Export] ${day} ${mealType}: Invalid meal time "${mealTime}" - hours: ${hours}, minutes: ${minutes}`)
+          toast({
+            title: "Invalid Meal Time",
+            description: `${day} ${mealType} has invalid time "${mealTime}". Hours must be 0-23 and minutes must be 0-59.`,
+            variant: "destructive",
+          })
+          return
+        }
 
-<<<<<<< HEAD
-        // Calculate the next occurrence of this day
-        const eventDate = new Date(today)
-        const currentDayIndex = today.getDay()
-        let diff = targetDayIndex - currentDayIndex
-        if (diff < 0) diff += 7 // Move to next week if day has passed
-
-        eventDate.setDate(today.getDate() + diff)
-        eventDate.setHours(hours, minutes, 0, 0)
-=======
-        // Use the pre-calculated targetDate and set the time using UTC
-        // This prevents any date mutation or timezone issues
-        const eventDate = new Date(Date.UTC(
-          targetDate.getUTCFullYear(),
-          targetDate.getUTCMonth(),
-          targetDate.getUTCDate(),
-          hours,
-          minutes,
-          0,
-          0
-        ))
->>>>>>> 70de6f2 (Add dish disable feature with backward/forward compatibility and fix meal card width)
-
-        const start = eventDate.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
+        // Create event date in browser's local timezone using stored components
+        // Create a fresh Date object each time to prevent any mutation
+        // IMPORTANT: Use the stored components directly, don't reference targetDate
+        const eventDate = new Date(targetYearValue, targetMonthValue, targetDateValue, hours, minutes, 0, 0)
+        
+        // Validate the date is correct before converting
+        if (eventDate.getFullYear() !== targetYearValue || 
+            eventDate.getMonth() !== targetMonthValue || 
+            eventDate.getDate() !== targetDateValue) {
+          console.error(`[Export] ${day} ${mealType}: Date mismatch! Expected ${targetYearValue}-${targetMonthValue + 1}-${targetDateValue}, got ${eventDate.getFullYear()}-${eventDate.getMonth() + 1}-${eventDate.getDate()}`)
+          toast({
+            title: "Date Calculation Error",
+            description: `Error calculating date for ${day} ${mealType}. Please try again.`,
+            variant: "destructive",
+          })
+          return
+        }
+        
+        // Convert to UTC for ICS format (ICS requires UTC times)
+        // toISOString() automatically converts to UTC
+        const utcDateStr = eventDate.toISOString()
+        const start = utcDateStr.replace(/[-:]/g, "").split(".")[0] + "Z"
+        
+        // Validate the ICS date format
+        const datePart = start.substring(0, 8)
+        const expectedDatePart = `${targetYearValue}${String(targetMonthValue + 1).padStart(2, "0")}${String(targetDateValue).padStart(2, "0")}`
+        if (datePart !== expectedDatePart) {
+          console.error(`[Export] ${day} ${mealType}: ICS date mismatch! Expected ${expectedDatePart}, got ${datePart}`)
+          console.error(`  Full ICS: ${start}`)
+          console.error(`  Event date: ${eventDate.toLocaleString()}`)
+          console.error(`  Components: Year=${targetYearValue}, Month=${targetMonthValue + 1}, Date=${targetDateValue}, Hours=${hours}, Minutes=${minutes}`)
+        }
+        
         // Event duration is 1 hour
-        const end =
-<<<<<<< HEAD
-          new Date(eventDate.getTime() + (dish.prepTime || 30) * 60000)
-            .toISOString()
-            .replace(/[-:]/g, "")
-            .split(".")[0] + "Z"
-
-        // Generate a simple unique UID
-        const uid = `dietos-${dayName.toLowerCase()}-${mealType.toLowerCase()}-${now}`
-=======
-          new Date(eventDate.getTime() + 60 * 60 * 1000).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
+        const endDate = new Date(eventDate.getTime() + 60 * 60 * 1000)
+        const end = endDate.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
 
         // Build comprehensive description
         const descriptionParts = [
@@ -293,21 +233,17 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
         ]
 
         const description = descriptionParts.filter((part) => part !== "").join("\\n")
->>>>>>> 70de6f2 (Add dish disable feature with backward/forward compatibility and fix meal card width)
+        
+        // Generate unique ID for this event
+        const uid = `dietos-${day.toLowerCase()}-${mealType.toLowerCase()}-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
         icsContent.push("BEGIN:VEVENT")
         icsContent.push(`UID:${uid}`)
-        icsContent.push(`DTSTAMP:${now}`)
-        icsContent.push(`SUMMARY:[${mealType.toUpperCase()}] ${dish.name}`)
+        icsContent.push(`DTSTAMP:${dtstamp}`)
+        icsContent.push(`SUMMARY:[${mealType.toUpperCase()}] ${dish.name} (${dish.prepTime} min)`)
         icsContent.push(`DTSTART:${start}`)
         icsContent.push(`DTEND:${end}`)
-<<<<<<< HEAD
-        icsContent.push(
-          `DESCRIPTION:Macros: Cals ${dish.calories}, Prot ${dish.protein}g, Carb ${dish.carbs}g, Fat ${dish.fat}g\\n\\nIngredients:\\n- ${dish.ingredients.join("\\n- ")}\\n\\nInstructions:\\n${dish.steps.join(" > ")}`,
-        )
-=======
         icsContent.push(`DESCRIPTION:${description}`)
->>>>>>> 70de6f2 (Add dish disable feature with backward/forward compatibility and fix meal card width)
         icsContent.push("END:VEVENT")
       })
     })
@@ -371,17 +307,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
   }
 
   const handleMealTimeChange = (meal: keyof typeof state.settings.defaultMealTimes, value: string) => {
-    // Validate HH:MM format
-    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/
-    if (!timeRegex.test(value)) {
-      toast({
-        title: "Invalid Time Format",
-        description: "Please use HH:MM format (e.g., 08:00)",
-        variant: "destructive",
-      })
-      return
-    }
-
+    // Allow typing freely - update state immediately for better UX
     updateState({
       ...state,
       settings: {
@@ -392,6 +318,64 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
         },
       },
     })
+  }
+
+  const handleMealTimeBlur = (meal: keyof typeof state.settings.defaultMealTimes, value: string) => {
+    // Validate on blur (when user finishes editing)
+    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/
+    if (!timeRegex.test(value)) {
+      toast({
+        title: "Invalid Time Format",
+        description: "Please use HH:MM format with hours 00-23 and minutes 00-59 (e.g., 08:00, 20:00)",
+        variant: "destructive",
+      })
+      // Reset to previous valid value or default
+      const defaultTimes: Record<string, string> = {
+        breakfast: "08:00",
+        lunch: "13:00",
+        snack: "16:00",
+        dinner: "20:00",
+      }
+      updateState({
+        ...state,
+        settings: {
+          ...state.settings,
+          defaultMealTimes: {
+            ...state.settings.defaultMealTimes,
+            [meal]: defaultTimes[meal] || "00:00",
+          },
+        },
+      })
+      return
+    }
+    
+    // Additional validation: parse and verify the values are within valid ranges
+    const [hours, minutes] = value.split(":").map(Number)
+    if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      toast({
+        title: "Invalid Time Range",
+        description: `Hours must be 0-23 and minutes must be 0-59. You entered ${hours}:${minutes}`,
+        variant: "destructive",
+      })
+      // Reset to previous valid value or default
+      const defaultTimes: Record<string, string> = {
+        breakfast: "08:00",
+        lunch: "13:00",
+        snack: "16:00",
+        dinner: "20:00",
+      }
+      updateState({
+        ...state,
+        settings: {
+          ...state.settings,
+          defaultMealTimes: {
+            ...state.settings.defaultMealTimes,
+            [meal]: defaultTimes[meal] || "00:00",
+          },
+        },
+      })
+      return
+    }
   }
 
   const handleImportClick = () => {
@@ -448,6 +432,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
         settings: {
           ...state.settings,
           defaultMealTimes: pendingImport.settings.defaultMealTimes,
+          timezone: pendingImport.settings.timezone || state.settings.timezone || "Asia/Kolkata",
         },
       }
       updateState(mergedState)
@@ -476,6 +461,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
                 type="text"
                 value={state.settings.defaultMealTimes.breakfast}
                 onChange={(e) => handleMealTimeChange("breakfast", e.target.value)}
+                onBlur={(e) => handleMealTimeBlur("breakfast", e.target.value)}
                 placeholder="08:00"
                 className="h-10 font-bold uppercase"
                 pattern="^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
@@ -487,6 +473,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
                 type="text"
                 value={state.settings.defaultMealTimes.lunch}
                 onChange={(e) => handleMealTimeChange("lunch", e.target.value)}
+                onBlur={(e) => handleMealTimeBlur("lunch", e.target.value)}
                 placeholder="13:00"
                 className="h-10 font-bold uppercase"
                 pattern="^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
@@ -498,6 +485,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
                 type="text"
                 value={state.settings.defaultMealTimes.snack}
                 onChange={(e) => handleMealTimeChange("snack", e.target.value)}
+                onBlur={(e) => handleMealTimeBlur("snack", e.target.value)}
                 placeholder="16:00"
                 className="h-10 font-bold uppercase"
                 pattern="^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
@@ -509,6 +497,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
                 type="text"
                 value={state.settings.defaultMealTimes.dinner}
                 onChange={(e) => handleMealTimeChange("dinner", e.target.value)}
+                onBlur={(e) => handleMealTimeBlur("dinner", e.target.value)}
                 placeholder="20:00"
                 className="h-10 font-bold uppercase"
                 pattern="^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
@@ -516,6 +505,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
             </div>
           </div>
         </section>
+
 
         <section className="space-y-4">
           <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Targets (Read Only)</h3>
