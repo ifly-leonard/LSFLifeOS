@@ -10,6 +10,7 @@ export type Dish = {
   tags: string[]
   ingredients: string[]
   steps: string[]
+  disabled?: boolean
 }
 
 export type WeeklyPlan = {
@@ -37,6 +38,7 @@ export type DietOSState = {
       calories: number
       protein: number
     }
+    timezone: string
   }
   weeklyPlan: WeeklyPlan
   dishes: Dish[]
@@ -59,6 +61,7 @@ export const INITIAL_STATE: DietOSState = {
       calories: 2000,
       protein: 150,
     },
+    timezone: "Asia/Kolkata",
   },
   weeklyPlan: {
     Monday: { breakfast: "1", lunch: "2", snack: "3", dinner: "4" },
@@ -82,6 +85,7 @@ export const INITIAL_STATE: DietOSState = {
       tags: ["rich-protein"],
       ingredients: ["2 Eggs", "1 slice Bread", "Onion", "Chili", "Spices"],
       steps: ["Whisk eggs with spices", "Cook in pan", "Toast bread"],
+      disabled: false,
     },
     {
       id: "2",
@@ -95,6 +99,7 @@ export const INITIAL_STATE: DietOSState = {
       tags: ["rich-protein", "low-carb"],
       ingredients: ["200g Chicken Breast", "Mixed Greens", "Olive Oil", "Lemon"],
       steps: ["Grill chicken", "Toss greens", "Serve"],
+      disabled: false,
     },
     {
       id: "3",
@@ -108,6 +113,7 @@ export const INITIAL_STATE: DietOSState = {
       tags: ["rich-protein"],
       ingredients: ["200g Greek Yogurt", "50g Berries"],
       steps: ["Mix and serve"],
+      disabled: false,
     },
     {
       id: "4",
@@ -121,6 +127,7 @@ export const INITIAL_STATE: DietOSState = {
       tags: ["rich-protein", "light"],
       ingredients: ["150g Salmon", "Broccoli", "Asparagus"],
       steps: ["Steam salmon and veg for 12 mins"],
+      disabled: false,
     },
   ],
   ingredientsIndex: ["Eggs", "Bread", "Chicken Breast", "Salmon", "Broccoli"],

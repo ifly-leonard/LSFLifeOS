@@ -1,27 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { type DietOSState, INITIAL_STATE } from "@/lib/dietos-state"
-
-const STORAGE_KEY = "dietos_state"
+import { type DietOSState } from "@/lib/dietos-state"
+import { loadState, saveState } from "@/lib/storage"
 
 export function useDietOS() {
   const [state, setState] = useState<DietOSState | null>(null)
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      try {
-        setState(JSON.parse(saved))
-      } catch (e) {
-        setState(INITIAL_STATE)
-      }
-    } else {
-      setState(INITIAL_STATE)
-    }
+    loadState().then((loadedState) => {
+      setState(loadedState)
+    })
   }, [])
 
-  const updateState = (newState: DietOSState) => {
+  const updateState = async (newState: DietOSState) => {
     const updated = {
       ...newState,
       meta: {
@@ -30,7 +22,7 @@ export function useDietOS() {
       },
     }
     setState(updated)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+    await saveState(updated)
   }
 
   return { state, updateState }

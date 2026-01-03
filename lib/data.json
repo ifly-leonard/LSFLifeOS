@@ -1,0 +1,111 @@
+{
+    "meta": {
+      "version": "1.0.0",
+      "lastUpdated": "2026-01-03T19:40:00.000Z"
+    },
+    "settings": {
+      "defaultMealTimes": {
+        "breakfast": "08:00",
+        "lunch": "13:00",
+        "snack": "16:00",
+        "dinner": "20:00"
+      },
+      "targets": {
+        "calories": 1850,
+        "protein": 180
+      }
+    },
+    "weeklyPlan": {
+      "Monday": {
+        "breakfast": "D1",
+        "lunch": "D5",
+        "snack": "D10",
+        "dinner": "D14"
+      },
+      "Tuesday": {
+        "breakfast": "D2",
+        "lunch": "D6",
+        "snack": "D11",
+        "dinner": "D15"
+      },
+      "Wednesday": {
+        "breakfast": "D3",
+        "lunch": "D7",
+        "snack": "D10",
+        "dinner": "D16"
+      },
+      "Thursday": {
+        "breakfast": "D1",
+        "lunch": "D8",
+        "snack": "D12",
+        "dinner": "D17"
+      },
+      "Friday": {
+        "breakfast": "D4",
+        "lunch": "D9",
+        "snack": "D10",
+        "dinner": "D18"
+      },
+      "Saturday": {
+        "breakfast": "D2",
+        "lunch": "D19",
+        "snack": "D11",
+        "dinner": "D20"
+      },
+      "Sunday": {
+        "breakfast": "D21",
+        "lunch": "D22",
+        "snack": "D23",
+        "dinner": "D24"
+      }
+    },
+    "dishes": [
+      { "id": "D1", "name": "Masala Omelette + Bread", "meal": "breakfast", "prepTime": 10, "calories": 420, "protein": 28, "carbs": 22, "fat": 22, "tags": ["high-protein"], "ingredients": ["3 Eggs", "1 slice Bread", "Onion", "Chilli", "Spices"], "steps": ["Whisk eggs", "Cook omelette", "Toast bread"] },
+      { "id": "D2", "name": "Egg Bhurji + Bread", "meal": "breakfast", "prepTime": 12, "calories": 430, "protein": 28, "carbs": 22, "fat": 24, "tags": ["high-protein"], "ingredients": ["3 Eggs", "Onion", "Tomato", "Bread"], "steps": ["Saute veg", "Scramble eggs", "Serve with bread"] },
+      { "id": "D3", "name": "Omelette with Chicken Sausage", "meal": "breakfast", "prepTime": 12, "calories": 520, "protein": 35, "carbs": 5, "fat": 38, "tags": ["processed-allowed"], "ingredients": ["3 Eggs", "1 Chicken Sausage"], "steps": ["Cook sausage", "Add eggs", "Make omelette"] },
+      { "id": "D4", "name": "Yogurt Protein Bowl", "meal": "breakfast", "prepTime": 3, "calories": 320, "protein": 42, "carbs": 12, "fat": 6, "tags": ["no-cook", "high-protein"], "ingredients": ["Greek Yogurt", "Whey Protein"], "steps": ["Mix and eat"] },
+  
+      { "id": "D5", "name": "Spicy Air-Fryer Chicken + Rice", "meal": "lunch", "prepTime": 20, "calories": 560, "protein": 55, "carbs": 35, "fat": 14, "tags": ["carb-heavy", "batch-cook"], "ingredients": ["Chicken Breast", "Rice", "Spices", "Veggies"], "steps": ["Marinate chicken", "Air fry", "Serve with rice"] },
+      { "id": "D6", "name": "Chicken Rice Bowl (Indian)", "meal": "lunch", "prepTime": 15, "calories": 560, "protein": 55, "carbs": 35, "fat": 14, "tags": ["carb-heavy"], "ingredients": ["Chicken Breast", "Rice", "Spices"], "steps": ["Assemble cooked chicken and rice"] },
+      { "id": "D7", "name": "Prawn Rice Bowl", "meal": "lunch", "prepTime": 15, "calories": 520, "protein": 50, "carbs": 35, "fat": 10, "tags": ["carb-heavy"], "ingredients": ["Prawns", "Rice", "Garlic", "Lemon"], "steps": ["Cook prawns", "Serve with rice"] },
+      { "id": "D8", "name": "Beef Pepper Stir-Fry + Rice", "meal": "lunch", "prepTime": 20, "calories": 620, "protein": 45, "carbs": 28, "fat": 28, "tags": ["rich-protein", "carb-heavy"], "ingredients": ["Beef", "Rice", "Pepper", "Onion"], "steps": ["Stir fry beef", "Serve with rice"] },
+      { "id": "D9", "name": "Chilli Garlic Chicken + Rice", "meal": "lunch", "prepTime": 18, "calories": 580, "protein": 55, "carbs": 35, "fat": 16, "tags": ["carb-heavy"], "ingredients": ["Chicken", "Rice", "Garlic", "Chilli"], "steps": ["Stir fry chicken", "Serve with rice"] },
+      { "id": "D19", "name": "Mutton Masala (Light) + Rice", "meal": "lunch", "prepTime": 30, "calories": 680, "protein": 42, "carbs": 28, "fat": 34, "tags": ["rich-protein", "carb-heavy"], "ingredients": ["Mutton", "Rice", "Onion", "Tomato"], "steps": ["Cook mutton masala", "Serve with small rice"] },
+      { "id": "D22", "name": "Chicken Fried Rice (Low Oil)", "meal": "lunch", "prepTime": 20, "calories": 720, "protein": 55, "carbs": 55, "fat": 22, "tags": ["carb-heavy", "indulgent"], "ingredients": ["Chicken", "Rice", "Egg", "Soy Sauce"], "steps": ["High heat stir fry"] },
+  
+      { "id": "D10", "name": "Whey Protein Shake", "meal": "snack", "prepTime": 2, "calories": 120, "protein": 24, "carbs": 3, "fat": 2, "tags": ["high-protein"], "ingredients": ["Whey Protein", "Water"], "steps": ["Shake and drink"] },
+      { "id": "D11", "name": "Greek Yogurt", "meal": "snack", "prepTime": 1, "calories": 140, "protein": 14, "carbs": 8, "fat": 4, "tags": ["no-cook"], "ingredients": ["Greek Yogurt"], "steps": ["Eat"] },
+      { "id": "D12", "name": "Boiled Eggs (2)", "meal": "snack", "prepTime": 10, "calories": 140, "protein": 12, "carbs": 1, "fat": 10, "tags": ["high-protein"], "ingredients": ["2 Eggs"], "steps": ["Boil eggs"] },
+      { "id": "D23", "name": "Protein Shake or Yogurt", "meal": "snack", "prepTime": 2, "calories": 160, "protein": 20, "carbs": 6, "fat": 4, "tags": ["flex"], "ingredients": ["Whey or Yogurt"], "steps": ["Choose one"] },
+  
+      { "id": "D14", "name": "Pepper Lemon Basa + Veggies", "meal": "dinner", "prepTime": 15, "calories": 380, "protein": 45, "carbs": 12, "fat": 10, "tags": ["low-carb", "light"], "ingredients": ["Basa", "Pepper", "Veggies"], "steps": ["Pan fry fish", "Serve with veg"] },
+      { "id": "D15", "name": "Lemon Garlic Basa + Soup", "meal": "dinner", "prepTime": 18, "calories": 420, "protein": 48, "carbs": 6, "fat": 16, "tags": ["light"], "ingredients": ["Basa", "Garlic", "Soup"], "steps": ["Cook fish", "Serve with broth"] },
+      { "id": "D16", "name": "Shredded Chicken Veg Soup", "meal": "dinner", "prepTime": 20, "calories": 360, "protein": 45, "carbs": 12, "fat": 10, "tags": ["low-carb", "light"], "ingredients": ["Chicken", "Veggies", "Broth"], "steps": ["Simmer together"] },
+      { "id": "D17", "name": "Clear Chicken Bone Broth + Veggies", "meal": "dinner", "prepTime": 15, "calories": 260, "protein": 25, "carbs": 14, "fat": 8, "tags": ["light"], "ingredients": ["Bone Broth", "Veggies"], "steps": ["Warm and eat"] },
+      { "id": "D18", "name": "Pepper Basa Fry + Veggies", "meal": "dinner", "prepTime": 15, "calories": 380, "protein": 45, "carbs": 12, "fat": 10, "tags": ["low-carb"], "ingredients": ["Basa", "Pepper", "Veggies"], "steps": ["Pan fry fish"] },
+      { "id": "D20", "name": "Lemon Chilli Chicken Soup", "meal": "dinner", "prepTime": 20, "calories": 320, "protein": 45, "carbs": 6, "fat": 10, "tags": ["low-carb"], "ingredients": ["Chicken", "Chilli", "Lemon"], "steps": ["Simmer soup"] },
+      { "id": "D21", "name": "Omelette + Sausage", "meal": "breakfast", "prepTime": 12, "calories": 430, "protein": 26, "carbs": 3, "fat": 32, "tags": ["processed-allowed"], "ingredients": ["Eggs", "Chicken Sausage"], "steps": ["Cook together"] },
+      { "id": "D24", "name": "Pepper Lemon Fish + Veggies", "meal": "dinner", "prepTime": 15, "calories": 380, "protein": 45, "carbs": 12, "fat": 10, "tags": ["reset", "low-carb"], "ingredients": ["Fish", "Pepper", "Veggies"], "steps": ["Pan fry fish"] }
+    ],
+    "ingredientsIndex": [
+      "Eggs",
+      "Chicken Breast",
+      "Basa",
+      "Prawns",
+      "Beef",
+      "Mutton",
+      "Rice",
+      "Greek Yogurt",
+      "Whey Protein",
+      "Chicken Sausage",
+      "Veggies",
+      "Broth",
+      "Garlic",
+      "Onion",
+      "Tomato",
+      "Spices",
+      "Pepper",
+      "Lemon"
+    ]
+  }
+  

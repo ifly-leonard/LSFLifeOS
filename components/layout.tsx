@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import Image from "next/image"
 
 import { Calendar, Utensils, ShoppingCart, Settings, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -23,7 +24,17 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   return (
     <div className="flex flex-col h-screen max-w-[390px] mx-auto bg-background border-x border-border shadow-2xl relative overflow-hidden">
       <header className="px-6 py-8 border-b border-border bg-white flex justify-between items-baseline">
-        <h1 className="text-2xl font-bold tracking-tighter uppercase italic">DietOS</h1>
+        <div className="flex items-center gap-2">
+          <Image
+            src="/lsf-branding/LSF Lion Logo Dark.png"
+            alt="LSF Logo"
+            width={80}
+            height={32}
+            className="h-8 w-auto"
+            priority
+          />
+          <span className="text-2xl font-bold tracking-tighter uppercase italic">LSF Life OS</span>
+        </div>
         <span className="text-[10px] text-muted-foreground uppercase font-medium tracking-widest">v1.0.0</span>
       </header>
 
