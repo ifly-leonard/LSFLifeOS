@@ -17,6 +17,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
   }
 
   const exportICS = () => {
+    const now = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
     const icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
@@ -25,11 +26,15 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
       "METHOD:PUBLISH",
     ]
 
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    const daysOrder = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     const today = new Date()
 
-    days.forEach((day, index) => {
-      const plan = state.weeklyPlan[day]
+    // Process each day in the weekly plan
+    Object.keys(state.weeklyPlan).forEach((dayName) => {
+      const plan = state.weeklyPlan[dayName]
+      const targetDayIndex = daysOrder.indexOf(dayName)
+      if (targetDayIndex === -1) return
+
       Object.entries(plan).forEach(([mealType, dishId]) => {
         const dish = state.dishes.find((d) => d.id === dishId)
         if (!dish) return
@@ -37,24 +42,33 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
         const mealTime = state.settings.defaultMealTimes[mealType as keyof typeof state.settings.defaultMealTimes]
         const [hours, minutes] = mealTime.split(":").map(Number)
 
-        // Calculate date for the upcoming week's specific day
+        // Calculate the next occurrence of this day
         const eventDate = new Date(today)
-        const currentDay = today.getDay() // 0 is Sun
-        const targetDay = (index + 1) % 7 // Monday is 1
-        const diff = targetDay >= currentDay ? targetDay - currentDay : 7 - (currentDay - targetDay)
+        const currentDayIndex = today.getDay()
+        let diff = targetDayIndex - currentDayIndex
+        if (diff < 0) diff += 7 // Move to next week if day has passed
+
         eventDate.setDate(today.getDate() + diff)
         eventDate.setHours(hours, minutes, 0, 0)
 
         const start = eventDate.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
         const end =
-          new Date(eventDate.getTime() + dish.prepTime * 60000).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
+          new Date(eventDate.getTime() + (dish.prepTime || 30) * 60000)
+            .toISOString()
+            .replace(/[-:]/g, "")
+            .split(".")[0] + "Z"
+
+        // Generate a simple unique UID
+        const uid = `dietos-${dayName.toLowerCase()}-${mealType.toLowerCase()}-${now}`
 
         icsContent.push("BEGIN:VEVENT")
-        icsContent.push(`SUMMARY:[${mealType.toUpperCase()}] ${dish.name} (${dish.prepTime} min)`)
+        icsContent.push(`UID:${uid}`)
+        icsContent.push(`DTSTAMP:${now}`)
+        icsContent.push(`SUMMARY:[${mealType.toUpperCase()}] ${dish.name}`)
         icsContent.push(`DTSTART:${start}`)
         icsContent.push(`DTEND:${end}`)
         icsContent.push(
-          `DESCRIPTION:Calories: ${dish.calories}\\nProtein: ${dish.protein}g\\nIngredients: ${dish.ingredients.join(", ")}\\nSteps: ${dish.steps.join(" > ")}`,
+          `DESCRIPTION:Macros: Cals ${dish.calories}, Prot ${dish.protein}g, Carb ${dish.carbs}g, Fat ${dish.fat}g\\n\\nIngredients:\\n- ${dish.ingredients.join("\\n- ")}\\n\\nInstructions:\\n${dish.steps.join(" > ")}`,
         )
         icsContent.push("END:VEVENT")
       })
