@@ -3,8 +3,9 @@
 import type React from "react"
 import Image from "next/image"
 
-import { Calendar, Utensils, ShoppingCart, Settings, Clock } from "lucide-react"
+import { Calendar, Utensils, ShoppingCart, Settings, Home } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Toaster } from "@/components/ui/toaster"
 
 interface LayoutProps {
   children: React.ReactNode
@@ -14,8 +15,8 @@ interface LayoutProps {
 
 export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   const tabs = [
-    { id: "today", icon: Clock, label: "Today" },
-    { id: "week", icon: Calendar, label: "Week" },
+    { id: "today", icon: Home, label: "Home" },
+    { id: "week", icon: Calendar, label: "Planner" },
     { id: "dishes", icon: Utensils, label: "Dishes" },
     { id: "groceries", icon: ShoppingCart, label: "Groceries" },
     { id: "settings", icon: Settings, label: "Settings" },
@@ -55,6 +56,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
           </button>
         ))}
       </nav>
+      <Toaster />
     </div>
   )
 }

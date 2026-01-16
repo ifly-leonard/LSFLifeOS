@@ -1,4 +1,5 @@
-const CACHE_NAME = "dietos-v1"
+const APP_VERSION = "1.0.0"
+const CACHE_NAME = `dietos-v${APP_VERSION}`
 const urlsToCache = [
   "/",
   "/icon-light-32x32.png",
@@ -13,6 +14,34 @@ self.addEventListener("install", (event) => {
       return cache.addAll(urlsToCache)
     })
   )
+  // Skip waiting to activate the new service worker immediately
+  self.skipWaiting()
+})
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((cacheName) => cacheName !== CACHE_NAME)
+            .map((cacheName) => caches.delete(cacheName))
+        )
+      }),
+      // Claim clients to control all pages immediately
+      self.clients.claim(),
+      // Notify all clients about the new version
+      self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({
+            type: "NEW_VERSION_AVAILABLE",
+            version: APP_VERSION,
+          })
+        })
+      }),
+    ])
+  )
 })
 
 self.addEventListener("fetch", (event) => {
@@ -23,15 +52,4 @@ self.addEventListener("fetch", (event) => {
   )
 })
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => caches.delete(cacheName))
-      )
-    })
-  )
-})
 

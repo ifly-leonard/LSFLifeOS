@@ -4,11 +4,13 @@ import type { DietOSState, Dish } from "@/lib/dietos-state"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Plus, Edit2, Copy, Eye, EyeOff } from "lucide-react"
+import { Search, Plus, Edit2, Copy, Eye, EyeOff, List, Grid3x3 } from "lucide-react"
 import { useState } from "react"
 import { DishForm } from "./dish-form"
 import { getMealColorClasses } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
+
+type ViewMode = "list" | "gallery"
 
 export function DishesView({ state, updateState }: { state: DietOSState; updateState: (s: DietOSState) => void }) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -16,6 +18,7 @@ export function DishesView({ state, updateState }: { state: DietOSState; updateS
   const [showDisabled, setShowDisabled] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [editingDish, setEditingDish] = useState<Dish | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>("list")
 
   const filteredDishes = state.dishes.filter((d) => {
     const matchesSearch =
@@ -94,7 +97,12 @@ export function DishesView({ state, updateState }: { state: DietOSState; updateS
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-end border-b-2 border-primary pb-2">
-        <h2 className="text-xl font-black uppercase tracking-tighter">Dish Library</h2>
+        <div className="flex flex-col">
+          <h2 className="text-xl font-black uppercase tracking-tighter">Dish Library</h2>
+          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+            modify the JSON file on Settings to edit the dishes
+          </p>
+        </div>
         <button
           onClick={handleAdd}
           className="bg-primary text-white p-1 hover:opacity-90 transition-opacity"
@@ -103,8 +111,8 @@ export function DishesView({ state, updateState }: { state: DietOSState; updateS
         </button>
       </div>
 
-      <Card className="p-4 border-2 border-primary shadow-none">
-        <div className="space-y-4">
+      <Card className="p-4 border-0 shadow-none">
+        <div className="flex justify-between items-center">
           <div className="flex flex-col">
             <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Total Dishes</span>
             <span className="text-lg font-black">{totalDishes}</span>
@@ -126,18 +134,44 @@ export function DishesView({ state, updateState }: { state: DietOSState; updateS
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Select value={mealFilter} onValueChange={setMealFilter}>
-          <SelectTrigger className="w-full h-12 border-2 font-bold uppercase text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Meals</SelectItem>
-            <SelectItem value="breakfast">Breakfast</SelectItem>
-            <SelectItem value="lunch">Lunch</SelectItem>
-            <SelectItem value="snack">Snack</SelectItem>
-            <SelectItem value="dinner">Dinner</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={mealFilter} onValueChange={setMealFilter}>
+            <SelectTrigger className="flex-1 h-12 border-2 font-bold uppercase text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Meals</SelectItem>
+              <SelectItem value="breakfast">Breakfast</SelectItem>
+              <SelectItem value="lunch">Lunch</SelectItem>
+              <SelectItem value="snack">Snack</SelectItem>
+              <SelectItem value="dinner">Dinner</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex border-2 rounded-md overflow-hidden">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-2 transition-colors ${
+                viewMode === "list"
+                  ? "bg-primary text-white"
+                  : "bg-background text-muted-foreground hover:text-foreground"
+              }`}
+              aria-label="List view"
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode("gallery")}
+              className={`p-2 transition-colors border-l-2 border-border ${
+                viewMode === "gallery"
+                  ? "bg-primary text-white"
+                  : "bg-background text-muted-foreground hover:text-foreground"
+              }`}
+              aria-label="Gallery view"
+            >
+              <Grid3x3 size={16} />
+            </button>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <Checkbox
             id="show-disabled"
@@ -155,13 +189,13 @@ export function DishesView({ state, updateState }: { state: DietOSState; updateS
         </div>
       </div>
 
-      <div className="space-y-4">
-        {filteredDishes.length === 0 ? (
-          <p className="text-center py-10 text-muted-foreground font-bold uppercase text-xs tracking-widest">
-            No dishes found
-          </p>
-        ) : (
-          filteredDishes.map((dish) => (
+      {filteredDishes.length === 0 ? (
+        <p className="text-center py-10 text-muted-foreground font-bold uppercase text-xs tracking-widest">
+          No dishes found
+        </p>
+      ) : viewMode === "list" ? (
+        <div className="space-y-4">
+          {filteredDishes.map((dish) => (
             <Card
               key={dish.id}
               className={`p-4 border border-border hover:border-primary transition-colors ${
@@ -229,9 +263,51 @@ export function DishesView({ state, updateState }: { state: DietOSState; updateS
                 </div>
               </div>
             </Card>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-3">
+          {filteredDishes.map((dish) => (
+            <Card
+              key={dish.id}
+              className={`p-3 border border-border hover:border-primary transition-colors cursor-pointer ${
+                dish.disabled ? "opacity-50" : ""
+              }`}
+              onClick={() => handleEdit(dish)}
+            >
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-start">
+                  <h3 className="font-bold uppercase text-xs leading-tight flex-1 line-clamp-2">{dish.name}</h3>
+                  {dish.disabled && (
+                    <span className="text-[6px] font-black uppercase tracking-widest bg-muted px-1 py-0.5 text-muted-foreground shrink-0">
+                      OFF
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  <span className={`text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${getMealColorClasses(dish.meal)}`}>
+                    {dish.meal}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-1 border-t border-border pt-2 mt-1">
+                  <div className="flex flex-col">
+                    <span className="text-[6px] font-bold text-muted-foreground uppercase tracking-widest">Cals</span>
+                    <span className="text-[10px] font-black">{dish.calories}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[6px] font-bold text-muted-foreground uppercase tracking-widest">Prot</span>
+                    <span className="text-[10px] font-black">{dish.protein}g</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[6px] font-bold text-muted-foreground uppercase tracking-widest">Time</span>
+                    <span className="text-[10px] font-black">{dish.prepTime}m</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <DishForm
         dish={editingDish}

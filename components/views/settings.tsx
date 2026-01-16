@@ -454,6 +454,9 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
 
         <section className="space-y-4">
           <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Default Meal Times</h3>
+          <p className="text-[9px] text-muted-foreground italic">
+            This time is when the events will be added to your Google Calendar
+          </p>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={`text-[9px] font-bold uppercase block mb-2 ${getMealTextColorClasses("breakfast")}`}>Breakfast</label>
@@ -519,6 +522,9 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
               <span className="text-lg font-black">{state.settings.targets.protein}g</span>
             </Card>
           </div>
+          <p className="text-[9px] text-muted-foreground italic">
+            Just ensure your meals are within this calorie budget
+          </p>
         </section>
 
       <section className="space-y-4">
