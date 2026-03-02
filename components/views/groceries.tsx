@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState, useMemo } from "react"
 import type { DietOSState } from "@/lib/dietos-state"
 import { Card } from "@/components/ui/card"
@@ -330,40 +331,61 @@ export function GroceriesView({ state }: { state: DietOSState }) {
           <div className="flex items-center gap-2">
             <Button
               variant={groupingMode === "category" ? "default" : "outline"}
-              size="icon"
               onClick={() => setGroupingMode("category")}
-              className="flex-1"
-              title="Group by Category"
+              className="flex-1 flex flex-col items-center justify-center gap-1 py-2"
+              aria-pressed={groupingMode === "category"}
+              aria-label="Group by category"
             >
               <Grid3x3 className="h-4 w-4" />
+              <span className="text-[10px] font-semibold uppercase tracking-tight">
+                Category
+              </span>
             </Button>
             <Button
               variant={groupingMode === "meals" ? "default" : "outline"}
-              size="icon"
               onClick={() => setGroupingMode("meals")}
-              className="flex-1"
-              title="Group by Meals"
+              className="flex-1 flex flex-col items-center justify-center gap-1 py-2"
+              aria-pressed={groupingMode === "meals"}
+              aria-label="Group by meals"
             >
               <Utensils className="h-4 w-4" />
+              <span className="text-[10px] font-semibold uppercase tracking-tight">
+                Meals
+              </span>
             </Button>
             <Button
               variant={groupingMode === "days" ? "default" : "outline"}
-              size="icon"
               onClick={() => setGroupingMode("days")}
-              className="flex-1"
-              title="Group by Days"
+              className="flex-1 flex flex-col items-center justify-center gap-1 p-5"
+              aria-pressed={groupingMode === "days"}
+              aria-label="Group by days"
+              size="lg"
             >
               <Calendar className="h-4 w-4" />
+              <span className="text-[10px] font-semibold uppercase tracking-tight">
+                Days
+              </span>
             </Button>
           </div>
           <Button
             onClick={handleCopyUnchecked}
             variant="outline"
-            size="sm"
+            size="lg"
             className="w-full"
           >
-            <Copy className="h-4 w-4" />
-            Copy for Instamart
+            <span className="flex items-center justify-center gap-2">
+              <Image
+                src="/swiggy-logo-color.svg"
+                alt="Swiggy Instamart"
+                width={18}
+                height={18}
+                className="shrink-0"
+              />
+              <span className="inline-flex items-center gap-1">
+                {/* <Copy className="h-4 w-4" /> */}
+                <span>Copy for Instamart</span>
+              </span>
+            </span>
           </Button>
         </div>
       </Card>
