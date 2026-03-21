@@ -3,6 +3,8 @@
 import type { Dish } from "@/lib/dietos-state"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Youtube } from "lucide-react"
 
 interface DishDetailDialogProps {
   dish: Dish | null
@@ -93,8 +95,23 @@ export function DishDetailDialog({ dish, open, onOpenChange }: DishDetailDialogP
           </div>
 
           <div>
-            <h3 className="text-sm font-black uppercase tracking-tighter mb-3 border-b-2 border-primary pb-1">
-              Recipe Steps
+            <h3 className="flex items-center justify-between gap-2 text-sm font-black uppercase tracking-tighter mb-3 border-b-2 border-primary pb-1">
+              <span>Recipe Steps</span>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                className="h-8 px-3 flex items-center gap-1 text-xs font-bold uppercase tracking-tight"
+                onClick={() => {
+                  const query = `${dish.name} recipe`
+                  const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`
+                  window.open(url, "_blank", "noopener,noreferrer")
+                }}
+                title="Search this recipe on YouTube"
+              >
+                <Youtube className="h-3 w-3" />
+                <span>Find recipe</span>
+              </Button>
             </h3>
             <ol className="space-y-3">
               {dish.steps.map((step, index) => (

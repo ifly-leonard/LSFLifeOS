@@ -149,21 +149,39 @@ export function GroceriesView({ state }: { state: DietOSState }) {
         })
         return
       }
+      // Aggregate by base item name, normalizing quantities like "2 Eggs" and "3 Eggs"
+      const aggregated = new Map<string, { name: string; quantity: number }>()
 
-      // Create CSV format
-      const csvLines = uncheckedItems.map((item) => {
-        // Extract quantity and name (e.g., "2 Eggs" -> "2, Eggs")
+      uncheckedItems.forEach((item) => {
         const match = item.name.match(/^(\d+)\s+(.+)$/)
-        if (match) {
-          const quantity = parseInt(match[1]) * item.count
-          const name = match[2]
-          return `${quantity},${name}`
+        const unitQuantity = match ? parseInt(match[1], 10) : 1
+        const baseName = (match ? match[2] : item.name).trim()
+        const key = baseName.toLowerCase()
+
+        const totalToAdd = unitQuantity * item.count
+        const existing = aggregated.get(key)
+
+        if (existing) {
+          existing.quantity += totalToAdd
+        } else {
+          aggregated.set(key, { name: baseName, quantity: totalToAdd })
         }
-        // If no quantity prefix, just use the name with count
-        return `${item.count},${item.name}`
       })
 
-      const csvContent = csvLines.join("\n")
+      const aggregatedItems = Array.from(aggregated.values())
+
+      if (aggregatedItems.length === 0) {
+        toast({
+          title: "No items to copy",
+          description: "All items are checked",
+        })
+        return
+      }
+
+      // Create Instamart-friendly text: "2 Eggs" (no comma between quantity and name)
+      const lines = aggregatedItems.map((item) => `${item.quantity} ${item.name}`)
+
+      const csvContent = lines.join("\n")
 
       // Copy to clipboard
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -283,17 +301,20 @@ export function GroceriesView({ state }: { state: DietOSState }) {
     const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {days.map((day) => {
           const items = groceriesByDays[day] || []
           if (items.length === 0) return null
           const grouped = groupGroceries(items)
           const isCollapsed = collapsedDays.has(day)
           return (
-            <div key={day} className="space-y-4">
+            <Card
+              key={day}
+              className="border-2 border-primary shadow-none overflow-hidden"
+            >
               <button
                 onClick={() => toggleDayCollapse(day)}
-                className="w-full flex items-center justify-between text-base font-black uppercase tracking-tighter border-b-2 border-primary pb-1 hover:opacity-80 transition-opacity"
+                className="w-full flex items-center justify-between px-4 py-3 text-base font-black uppercase tracking-tighter bg-primary/5 hover:bg-primary/10 transition-colors"
               >
                 <span>{day}</span>
                 {isCollapsed ? (
@@ -303,13 +324,13 @@ export function GroceriesView({ state }: { state: DietOSState }) {
                 )}
               </button>
               {!isCollapsed && (
-                <>
+                <div className="px-4 pb-4 pt-2 space-y-4">
                   {renderGroceryList(grouped.proteins, "Proteins", true)}
                   {renderGroceryList(grouped.vegetables, "Vegetables", true)}
                   {renderGroceryList(grouped.pantry, "Pantry", true)}
-                </>
+                </div>
               )}
-            </div>
+            </Card>
           )
         })}
       </div>
@@ -331,8 +352,9 @@ export function GroceriesView({ state }: { state: DietOSState }) {
           <div className="flex items-center gap-2">
             <Button
               variant={groupingMode === "category" ? "default" : "outline"}
+              size="lg"
               onClick={() => setGroupingMode("category")}
-              className="flex-1 flex flex-col items-center justify-center gap-1 py-2"
+              className="flex-1 flex flex-col items-center justify-center gap-1 h-14 py-3"
               aria-pressed={groupingMode === "category"}
               aria-label="Group by category"
             >
@@ -343,8 +365,9 @@ export function GroceriesView({ state }: { state: DietOSState }) {
             </Button>
             <Button
               variant={groupingMode === "meals" ? "default" : "outline"}
+              size="lg"
               onClick={() => setGroupingMode("meals")}
-              className="flex-1 flex flex-col items-center justify-center gap-1 py-2"
+              className="flex-1 flex flex-col items-center justify-center gap-1 h-14 py-3"
               aria-pressed={groupingMode === "meals"}
               aria-label="Group by meals"
             >
@@ -355,11 +378,11 @@ export function GroceriesView({ state }: { state: DietOSState }) {
             </Button>
             <Button
               variant={groupingMode === "days" ? "default" : "outline"}
+              size="lg"
               onClick={() => setGroupingMode("days")}
-              className="flex-1 flex flex-col items-center justify-center gap-1 p-5"
+              className="flex-1 flex flex-col items-center justify-center gap-1 h-14 py-3"
               aria-pressed={groupingMode === "days"}
               aria-label="Group by days"
-              size="lg"
             >
               <Calendar className="h-4 w-4" />
               <span className="text-[10px] font-semibold uppercase tracking-tight">
@@ -371,7 +394,7 @@ export function GroceriesView({ state }: { state: DietOSState }) {
             onClick={handleCopyUnchecked}
             variant="outline"
             size="lg"
-            className="w-full"
+            className="w-full h-14 py-3"
           >
             <span className="flex items-center justify-center gap-2">
               <Image
@@ -391,25 +414,29 @@ export function GroceriesView({ state }: { state: DietOSState }) {
       </Card>
 
       {/* Groceries List */}
-      <Card className="p-6 border-2 border-primary shadow-none">
-        <div className="space-y-6">
-          {groceries.length === 0 ? (
-            <p className="text-center py-10 text-muted-foreground font-bold uppercase text-xs tracking-widest">
-              No ingredients in weekly plan
-            </p>
-          ) : groupingMode === "category" ? (
-            <>
-              {renderGroceryList(grouped.proteins, "Proteins", false)}
-              {renderGroceryList(grouped.vegetables, "Vegetables", false)}
-              {renderGroceryList(grouped.pantry, "Pantry", false)}
-            </>
-          ) : groupingMode === "meals" ? (
-            renderByMeals()
-          ) : (
-            renderByDays()
-          )}
-        </div>
-      </Card>
+      {groceries.length === 0 ? (
+        <Card className="p-6 border-2 border-primary shadow-none">
+          <p className="text-center py-10 text-muted-foreground font-bold uppercase text-xs tracking-widest">
+            No ingredients in weekly plan
+          </p>
+        </Card>
+      ) : groupingMode === "days" ? (
+        renderByDays()
+      ) : (
+        <Card className="p-6 border-2 border-primary shadow-none">
+          <div className="space-y-6">
+            {groupingMode === "category" ? (
+              <>
+                {renderGroceryList(grouped.proteins, "Proteins", false)}
+                {renderGroceryList(grouped.vegetables, "Vegetables", false)}
+                {renderGroceryList(grouped.pantry, "Pantry", false)}
+              </>
+            ) : (
+              renderByMeals()
+            )}
+          </div>
+        </Card>
+      )}
 
       <p className="text-[10px] text-muted-foreground text-center font-bold uppercase tracking-widest">
         Quantities aggregated across all weekly meals

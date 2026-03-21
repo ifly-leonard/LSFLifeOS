@@ -18,7 +18,7 @@ export function DishesView({ state, updateState }: { state: DietOSState; updateS
   const [showDisabled, setShowDisabled] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [editingDish, setEditingDish] = useState<Dish | null>(null)
-  const [viewMode, setViewMode] = useState<ViewMode>("list")
+  const [viewMode, setViewMode] = useState<ViewMode>("gallery")
 
   const filteredDishes = state.dishes.filter((d) => {
     const matchesSearch =

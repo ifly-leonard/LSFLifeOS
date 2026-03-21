@@ -1,0 +1,15 @@
+:root {
+  --lsf-background: #050816;
+  --lsf-surface: #0b1020;
+  --lsf-border: #272b3b;
+  --lsf-primary: #ff4b6e;
+  --lsf-primary-soft: rgba(255, 75, 110, 0.1);
+  --lsf-primary-strong: #ff2653;
+  --lsf-text-main: #f9fafb;
+  --lsf-text-muted: #9ca3af;
+}
+
+:root {
+  color-scheme: dark;
+}
+
