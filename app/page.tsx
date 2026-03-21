@@ -9,13 +9,16 @@ import { WeekView } from "@/components/views/week"
 import { DishesView } from "@/components/views/dishes"
 import { GroceriesView } from "@/components/views/groceries"
 import { SettingsView } from "@/components/views/settings"
+import { LauncherView } from "@/components/views/launcher"
+import { PlaceholderAppView } from "@/components/views/placeholder-app"
 
 const VERSION_STORAGE_KEY = "dietos_app_version"
-const CURRENT_VERSION = "1.0.0"
+const CURRENT_VERSION = "1.5.0"
 
 export default function DietOSApp() {
   const { state, updateState } = useDietOS()
   const [activeTab, setActiveTab] = useState("today")
+  const [activeApp, setActiveApp] = useState("launcher")
   const [showSplash, setShowSplash] = useState(false)
 
   useEffect(() => {
@@ -76,12 +79,29 @@ export default function DietOSApp() {
   return (
     <>
       {showSplash && <SplashScreen onDismiss={handleDismissSplash} />}
-      <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-        {activeTab === "today" && <TodayView state={state} />}
-        {activeTab === "week" && <WeekView state={state} updateState={updateState} />}
-        {activeTab === "dishes" && <DishesView state={state} updateState={updateState} />}
-        {activeTab === "groceries" && <GroceriesView state={state} />}
-        {activeTab === "settings" && <SettingsView state={state} updateState={updateState} />}
+      <Layout 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        activeApp={activeApp}
+        setActiveApp={setActiveApp}
+      >
+        {activeApp === "launcher" && <LauncherView onSelectApp={setActiveApp} />}
+        {activeApp === "dietos" && (
+          <>
+            {activeTab === "today" && <TodayView state={state} />}
+            {activeTab === "week" && <WeekView state={state} updateState={updateState} />}
+            {activeTab === "dishes" && <DishesView state={state} updateState={updateState} />}
+            {activeTab === "groceries" && <GroceriesView state={state} />}
+            {activeTab === "settings" && <SettingsView state={state} updateState={updateState} />}
+          </>
+        )}
+        {["wardrobeos", "laundryos", "sops"].includes(activeApp) && (
+          <PlaceholderAppView name={
+            activeApp === "wardrobeos" ? "Wardrobe OS" : 
+            activeApp === "laundryos" ? "Laundry OS" : 
+            "SOPs"
+          } />
+        )}
       </Layout>
     </>
   )

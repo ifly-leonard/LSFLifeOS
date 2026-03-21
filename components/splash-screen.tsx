@@ -40,33 +40,33 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
           </h2>
           <div className="space-y-3">
             <div className="flex items-start gap-3">
+               <span className="text-primary font-black text-lg leading-none">•</span>
+               <p className="text-xs font-bold uppercase tracking-tight text-foreground flex-1">
+                 Centralized Life Operating System
+               </p>
+            </div>
+            <div className="flex items-start gap-3">
               <span className="text-primary font-black text-lg leading-none">•</span>
               <p className="text-xs font-bold uppercase tracking-tight text-foreground flex-1">
-                Today&apos;s meal schedule
+                Intelligent Diet & Meal Planning
               </p>
             </div>
             <div className="flex items-start gap-3">
               <span className="text-primary font-black text-lg leading-none">•</span>
               <p className="text-xs font-bold uppercase tracking-tight text-foreground flex-1">
-                Weekly meal planning with smart guardrails
+                Wardrobe & Style Management
               </p>
             </div>
             <div className="flex items-start gap-3">
               <span className="text-primary font-black text-lg leading-none">•</span>
               <p className="text-xs font-bold uppercase tracking-tight text-foreground flex-1">
-                Dish library management
+                Unified Laundry Tracking
               </p>
             </div>
             <div className="flex items-start gap-3">
               <span className="text-primary font-black text-lg leading-none">•</span>
               <p className="text-xs font-bold uppercase tracking-tight text-foreground flex-1">
-                Automated grocery list generation
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-primary font-black text-lg leading-none">•</span>
-              <p className="text-xs font-bold uppercase tracking-tight text-foreground flex-1">
-                Settings & customization
+                Standard Operating Procedures (SOPs)
               </p>
             </div>
           </div>
@@ -78,7 +78,7 @@ export function SplashScreen({ onDismiss }: SplashScreenProps) {
             Want to fork this app?
           </p>
           <a
-            href="https://github.com/ifly-leonard/DietOS"
+            href="https://github.com/ifly-leonard/LSFLifeOS"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wide text-primary hover:opacity-80 transition-opacity"
