@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useDietOS } from "@/hooks/use-dietos"
+import { useToast } from "@/hooks/use-toast"
 import { Layout } from "@/components/layout"
 import { SplashScreen } from "@/components/splash-screen"
 import { TodayView } from "@/components/views/today"
@@ -17,9 +18,54 @@ const CURRENT_VERSION = "1.5.0"
 
 export default function DietOSApp() {
   const { state, updateState } = useDietOS()
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("today")
   const [activeApp, setActiveApp] = useState("launcher")
   const [showSplash, setShowSplash] = useState(false)
+  const activeAppRef = useRef(activeApp)
+
+  useEffect(() => {
+    activeAppRef.current = activeApp
+  }, [activeApp])
+
+  useEffect(() => {
+    let backPressCount = 0
+    let backPressTimer: NodeJS.Timeout
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (activeAppRef.current !== "launcher") {
+        setActiveApp("launcher")
+        window.history.pushState(null, "", window.location.pathname)
+        return
+      }
+
+      backPressCount++
+      if (backPressCount === 1) {
+        window.history.pushState(null, "", window.location.pathname)
+        toast({
+          description: "Press back again to exit",
+          duration: 2000,
+        })
+        backPressTimer = setTimeout(() => {
+          backPressCount = 0
+        }, 2000)
+      } else {
+        window.history.back()
+      }
+    }
+
+    if (typeof window !== "undefined") {
+      window.history.pushState(null, "", window.location.pathname)
+      window.addEventListener("popstate", handlePopState)
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("popstate", handlePopState)
+      }
+      clearTimeout(backPressTimer)
+    }
+  }, [toast])
 
   useEffect(() => {
     // Check if this is a new version
