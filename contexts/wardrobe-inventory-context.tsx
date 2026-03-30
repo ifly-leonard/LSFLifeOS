@@ -20,6 +20,7 @@ type WardrobeInventoryContextValue = {
   items: WardrobeItem[]
   addItem: (item: WardrobeItem) => void
   updateItem: (id: string, patch: Partial<WardrobeItem>) => void
+  removeItem: (id: string) => void
   isReady: boolean
 }
 
@@ -50,9 +51,17 @@ export function WardrobeInventoryProvider({ children }: { children: ReactNode })
     })
   }, [])
 
+  const removeItem = useCallback((id: string) => {
+    setItems((prev) => {
+      const next = prev.filter((item) => item.id !== id)
+      saveWardrobeInventory(next)
+      return next
+    })
+  }, [])
+
   const value = useMemo(
-    () => ({ items, addItem, updateItem, isReady }),
-    [items, addItem, updateItem, isReady],
+    () => ({ items, addItem, updateItem, removeItem, isReady }),
+    [items, addItem, updateItem, removeItem, isReady],
   )
 
   return (

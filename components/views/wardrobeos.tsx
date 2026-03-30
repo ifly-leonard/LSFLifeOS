@@ -14,7 +14,11 @@ import { WardrobeImage } from "@/components/wardrobe-image"
 import {
   Category,
   Color,
+  Fit,
   Formality,
+  Material,
+  Pattern,
+  Subcategory,
   WardrobeItem,
   Status
 } from "@/lib/wardrobe-data"
@@ -34,12 +38,14 @@ interface WardrobeOSViewProps {
 }
 
 export function WardrobeOSView({ onNavigate }: WardrobeOSViewProps) {
-  const { items, updateItem } = useWardrobeInventory()
+  const { items, updateItem, removeItem } = useWardrobeInventory()
   const [inventoryMode, setInventoryMode] = useState<"browse" | "lookbook">("browse")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<Category | "all">("all")
   const [selectedFormality, setSelectedFormality] = useState<Formality | "all">("all")
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(null)
+  const [editDraft, setEditDraft] = useState<WardrobeItem | null>(null)
+  const [isEditingItem, setIsEditingItem] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [showStats, setShowStats] = useState(false)
@@ -115,6 +121,8 @@ export function WardrobeOSView({ onNavigate }: WardrobeOSViewProps) {
 
   const handleItemClick = (item: WardrobeItem) => {
     setSelectedItem(item)
+    setEditDraft({ ...item })
+    setIsEditingItem(false)
     setDialogOpen(true)
   }
 
@@ -124,6 +132,37 @@ export function WardrobeOSView({ onNavigate }: WardrobeOSViewProps) {
     if (!ok) return
     updateItem(selectedItem.id, { image_url: "" })
     setSelectedItem({ ...selectedItem, image_url: "" })
+  }
+
+  const handleDeleteItem = async () => {
+    if (!selectedItem) return
+    if (selectedItem.image_url) {
+      await deleteWardrobeImage(selectedItem.image_url)
+    }
+    removeItem(selectedItem.id)
+    setDialogOpen(false)
+    setSelectedItem(null)
+  }
+
+  const handleSaveItemEdit = () => {
+    if (!selectedItem || !editDraft) return
+    updateItem(selectedItem.id, {
+      title: editDraft.title,
+      category: editDraft.category,
+      subcategory: editDraft.subcategory,
+      primary_color: editDraft.primary_color,
+      secondary_colors: editDraft.secondary_colors,
+      pattern: editDraft.pattern,
+      material: editDraft.material,
+      fit: editDraft.fit,
+      formality: editDraft.formality,
+      status: editDraft.status,
+      brand: editDraft.brand,
+      size: editDraft.size,
+      notes: editDraft.notes,
+    })
+    setSelectedItem({ ...editDraft })
+    setIsEditingItem(false)
   }
 
   const getStatusColor = (status: Status) => {
@@ -447,7 +486,13 @@ export function WardrobeOSView({ onNavigate }: WardrobeOSViewProps) {
       )}
 
       {/* Item Detail Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open)
+        if (!open) {
+          setIsEditingItem(false)
+          setEditDraft(null)
+        }
+      }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] rounded-none sm:rounded-lg">
           {selectedItem && (
             <>
@@ -456,6 +501,132 @@ export function WardrobeOSView({ onNavigate }: WardrobeOSViewProps) {
               </DialogHeader>
 
               <div className="space-y-6">
+                <div className="flex justify-end gap-2">
+                  {!isEditingItem ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-2 text-[10px] font-black uppercase tracking-widest"
+                      onClick={() => {
+                        setEditDraft({ ...selectedItem })
+                        setIsEditingItem(true)
+                      }}
+                    >
+                      Edit Item
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="border-2 text-[10px] font-black uppercase tracking-widest"
+                        onClick={() => {
+                          setEditDraft({ ...selectedItem })
+                          setIsEditingItem(false)
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        className="text-[10px] font-black uppercase tracking-widest"
+                        onClick={handleSaveItemEdit}
+                      >
+                        Save Changes
+                      </Button>
+                    </>
+                  )}
+                </div>
+                {isEditingItem && editDraft && (
+                  <Card className="p-3 border-2 border-primary/20 space-y-3">
+                    <div>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Title</span>
+                      <Input
+                        className="mt-1 h-9 border-2 text-xs font-bold"
+                        value={editDraft.title}
+                        onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Category</span>
+                        <Select value={editDraft.category} onValueChange={(v: Category) => setEditDraft({ ...editDraft, category: v })}>
+                          <SelectTrigger className="mt-1 h-9 border-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {Object.values(Category).map((v) => (
+                              <SelectItem key={v} value={v} className="text-xs font-bold uppercase">{v}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Type</span>
+                        <Select value={String(editDraft.subcategory)} onValueChange={(v) => setEditDraft({ ...editDraft, subcategory: v as Subcategory })}>
+                          <SelectTrigger className="mt-1 h-9 border-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {Object.values(Subcategory).map((v) => (
+                              <SelectItem key={v} value={v} className="text-xs font-bold uppercase">{v}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Primary Color</span>
+                        <Select value={editDraft.primary_color} onValueChange={(v: Color) => setEditDraft({ ...editDraft, primary_color: v })}>
+                          <SelectTrigger className="mt-1 h-9 border-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {Object.values(Color).map((v) => (
+                              <SelectItem key={v} value={v} className="text-xs font-bold uppercase">{v}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Status</span>
+                        <Select value={editDraft.status} onValueChange={(v: Status) => setEditDraft({ ...editDraft, status: v })}>
+                          <SelectTrigger className="mt-1 h-9 border-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {Object.values(Status).map((v) => (
+                              <SelectItem key={v} value={v} className="text-xs font-bold uppercase">{v}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Pattern</span>
+                        <Select value={editDraft.pattern} onValueChange={(v: Pattern) => setEditDraft({ ...editDraft, pattern: v })}>
+                          <SelectTrigger className="mt-1 h-9 border-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
+                          <SelectContent>{Object.values(Pattern).map((v) => <SelectItem key={v} value={v} className="text-xs font-bold uppercase">{v}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Material</span>
+                        <Select value={editDraft.material} onValueChange={(v: Material) => setEditDraft({ ...editDraft, material: v })}>
+                          <SelectTrigger className="mt-1 h-9 border-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
+                          <SelectContent>{Object.values(Material).map((v) => <SelectItem key={v} value={v} className="text-xs font-bold uppercase">{v}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Fit</span>
+                        <Select value={editDraft.fit} onValueChange={(v: Fit) => setEditDraft({ ...editDraft, fit: v })}>
+                          <SelectTrigger className="mt-1 h-9 border-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
+                          <SelectContent>{Object.values(Fit).map((v) => <SelectItem key={v} value={v} className="text-xs font-bold uppercase">{v}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Formality</span>
+                      <Select value={editDraft.formality} onValueChange={(v: Formality) => setEditDraft({ ...editDraft, formality: v })}>
+                        <SelectTrigger className="mt-1 h-9 border-2 text-xs font-bold uppercase"><SelectValue /></SelectTrigger>
+                        <SelectContent>{Object.values(Formality).map((v) => <SelectItem key={v} value={v} className="text-xs font-bold uppercase">{v.replace("_", " ")}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </Card>
+                )}
                 <div className="flex flex-wrap gap-2">
                   <span className="text-[9px] font-black uppercase tracking-widest bg-primary text-white px-2 py-1">
                     {selectedItem.category}
@@ -492,6 +663,17 @@ export function WardrobeOSView({ onNavigate }: WardrobeOSViewProps) {
                   >
                     <Trash2 size={12} className="mr-1" />
                     Delete Image
+                  </Button>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="text-[10px] font-black uppercase tracking-widest"
+                    onClick={() => void handleDeleteItem()}
+                  >
+                    <Trash2 size={12} className="mr-1" />
+                    Delete Item
                   </Button>
                 </div>
 

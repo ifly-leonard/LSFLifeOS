@@ -485,23 +485,11 @@ export function WardrobeAddItemView({ onSaved, onCancel }: WardrobeAddItemViewPr
                 />
               </label>
               <div className="mt-2 grid grid-cols-[1fr_auto] gap-2 items-center">
-                <Select
-                  value={form.primary_color}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, primary_color: v as Color }))
-                  }
-                >
-                  <SelectTrigger className="border-2 w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(Color).map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  readOnly
+                  value={primaryColorHex}
+                  className="border-2 w-full h-9 font-black uppercase text-xs tracking-widest"
+                />
                 <input
                   type="color"
                   aria-label="Pick primary color"
