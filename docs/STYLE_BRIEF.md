@@ -1,8 +1,8 @@
-# LSFLifeOS (DietOS) — UI Style Brief
+# LSFLifeOS (LifeOS) — UI Style Brief
 
 ## Overview
 
-LSFLifeOS (branded as **DietOS**) is a mobile-first PWA for meal planning and diet management. The UI follows an **executive, editorial** aesthetic: sharp edges, bold typography, uppercase labels, and a restrained navy-based color palette. The tagline "Designed for Executive Efficiency" captures the design intent.
+LSFLifeOS (branded as **LifeOS**) is a mobile-first PWA for meal planning and diet management. The UI follows an **executive, editorial** aesthetic: sharp edges, bold typography, uppercase labels, and a restrained navy-based color palette. The tagline "Designed for Executive Efficiency" captures the design intent.
 
 ---
 

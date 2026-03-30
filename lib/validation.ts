@@ -1,6 +1,6 @@
-import { type DietOSState, type Dish } from "./dietos-state"
+import { type LifeOSState, type Dish } from "./lifeos-state"
 
-export function validateDietOSState(data: unknown): { valid: boolean; error?: string; state?: DietOSState } {
+export function validateLifeOSState(data: unknown): { valid: boolean; error?: string; state?: LifeOSState } {
   try {
     if (!data || typeof data !== "object") {
       return { valid: false, error: "Data must be an object" }
@@ -42,6 +42,31 @@ export function validateDietOSState(data: unknown): { valid: boolean; error?: st
     // Timezone is optional for backward compatibility, but if present must be a string
     if (settings.timezone !== undefined && typeof settings.timezone !== "string") {
       return { valid: false, error: "Invalid 'settings.timezone' (must be a string)" }
+    }
+
+    if (settings.wardrobe !== undefined) {
+      if (typeof settings.wardrobe !== "object") {
+        return { valid: false, error: "Invalid 'settings.wardrobe' (must be an object)" }
+      }
+      const wardrobe = settings.wardrobe as Record<string, unknown>
+      if (typeof wardrobe.skinTone !== "string") {
+         return { valid: false, error: "Invalid 'settings.wardrobe.skinTone' (must be a string)" }
+      }
+      if (typeof wardrobe.bodyType !== "string") {
+         return { valid: false, error: "Invalid 'settings.wardrobe.bodyType' (must be a string)" }
+      }
+      if (typeof wardrobe.dressingPreference !== "string") {
+         return { valid: false, error: "Invalid 'settings.wardrobe.dressingPreference' (must be a string)" }
+      }
+      if (wardrobe.skinToneImage !== undefined && typeof wardrobe.skinToneImage !== "string") {
+         return { valid: false, error: "Invalid 'settings.wardrobe.skinToneImage' (must be a string)" }
+      }
+    } else {
+      settings.wardrobe = {
+        skinTone: "#e0ac69",
+        bodyType: "athletic",
+        dressingPreference: "minimalist"
+      }
     }
 
     // Validate weeklyPlan
@@ -96,7 +121,7 @@ export function validateDietOSState(data: unknown): { valid: boolean; error?: st
       }
     }
 
-    return { valid: true, state: obj as DietOSState }
+    return { valid: true, state: obj as LifeOSState }
   } catch (error) {
     return {
       valid: false,

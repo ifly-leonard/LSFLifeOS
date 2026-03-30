@@ -1,6 +1,6 @@
 "use client"
 
-import type { DietOSState, Dish } from "@/lib/dietos-state"
+import type { LifeOSState, Dish } from "@/lib/lifeos-state"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 
 type ViewMode = "list" | "gallery"
 
-export function DishesView({ state, updateState }: { state: DietOSState; updateState: (s: DietOSState) => void }) {
+export function DishesView({ state, updateState }: { state: LifeOSState; updateState: (s: LifeOSState) => void }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [mealFilter, setMealFilter] = useState<string>("all")
   const [showDisabled, setShowDisabled] = useState(false)

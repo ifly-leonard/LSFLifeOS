@@ -6,7 +6,7 @@ function generateTestICS(selectedDays, currentDate) {
   const icsContent = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//DietOS//NONSGML v1.0//EN",
+    "PRODID:-//LifeOS//NONSGML v1.0//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
   ];

@@ -1,4 +1,4 @@
-import { type DietOSState, type WeeklyPlan, type Dish } from "./dietos-state"
+import { type LifeOSState, type WeeklyPlan, type Dish } from "./lifeos-state"
 
 function getRandomElement<T>(array: T[]): T | null {
   if (array.length === 0) return null
@@ -10,7 +10,7 @@ function hasProteinTag(dish: Dish): boolean {
 }
 
 function randomizeDay(
-  state: DietOSState,
+  state: LifeOSState,
   day: string,
   maxRetries: number = 20
 ): { breakfast: string; lunch: string; snack: string; dinner: string } | null {
@@ -79,7 +79,7 @@ function randomizeDay(
   return null
 }
 
-export function randomizeWeeklyPlan(state: DietOSState): WeeklyPlan {
+export function randomizeWeeklyPlan(state: LifeOSState): WeeklyPlan {
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
   const newPlan: WeeklyPlan = {} as WeeklyPlan
   let failedDays: string[] = []

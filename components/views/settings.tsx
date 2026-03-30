@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useRef } from "react"
-import type { DietOSState } from "@/lib/dietos-state"
-import { validateDietOSState } from "@/lib/validation"
+import type { LifeOSState } from "@/lib/lifeos-state"
+import { validateLifeOSState } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -21,16 +21,16 @@ import {
 } from "@/components/ui/dialog"
 
 
-export function SettingsView({ state, updateState }: { state: DietOSState; updateState: (s: DietOSState) => void }) {
+export function SettingsView({ state, updateState }: { state: LifeOSState; updateState: (s: LifeOSState) => void }) {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [importMode, setImportMode] = useState<"overwrite" | "merge" | null>(null)
-  const [pendingImport, setPendingImport] = useState<DietOSState | null>(null)
+  const [pendingImport, setPendingImport] = useState<LifeOSState | null>(null)
   const [showRawJSON, setShowRawJSON] = useState(false)
   const [rawJSONText, setRawJSONText] = useState("")
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
-  const [pendingJSONState, setPendingJSONState] = useState<DietOSState | null>(null)
+  const [pendingJSONState, setPendingJSONState] = useState<LifeOSState | null>(null)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [selectedDays, setSelectedDays] = useState<string[]>([
     "Monday",
@@ -45,7 +45,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2))
     const downloadAnchorNode = document.createElement("a")
     downloadAnchorNode.setAttribute("href", dataStr)
-    downloadAnchorNode.setAttribute("download", `dietos_state_${new Date().toISOString().split("T")[0]}.json`)
+    downloadAnchorNode.setAttribute("download", `lifeos_state_${new Date().toISOString().split("T")[0]}.json`)
     document.body.appendChild(downloadAnchorNode)
     downloadAnchorNode.click()
     downloadAnchorNode.remove()
@@ -65,7 +65,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
     const icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//DietOS//NONSGML v1.0//EN",
+      "PRODID:-//LifeOS//NONSGML v1.0//EN",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
     ]
@@ -228,14 +228,14 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
           ...dish.steps.map((step, idx) => `${idx + 1}. ${step}`),
           "",
           "---",
-          `Exported from DietOS v${state.meta.version}`,
+          `Exported from LifeOS v${state.meta.version}`,
           `Export Date: ${exportTimestamp}`,
         ]
 
         const description = descriptionParts.filter((part) => part !== "").join("\\n")
         
         // Generate unique ID for this event
-        const uid = `dietos-${day.toLowerCase()}-${mealType.toLowerCase()}-${Date.now()}-${Math.random().toString(36).substring(7)}`
+        const uid = `lifeos-${day.toLowerCase()}-${mealType.toLowerCase()}-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
         icsContent.push("BEGIN:VEVENT")
         icsContent.push(`UID:${uid}`)
@@ -258,7 +258,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
     const hours = String(exportDate.getHours()).padStart(2, "0")
     const minutes = String(exportDate.getMinutes()).padStart(2, "0")
     const seconds = String(exportDate.getSeconds()).padStart(2, "0")
-    const filename = `dietos_plan_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.ics`
+    const filename = `lifeos_plan_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.ics`
 
     const element = document.createElement("a")
     const file = new Blob([icsContent.join("\r\n")], { type: "text/calendar" })
@@ -391,7 +391,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
       const parsed = JSON.parse(text)
 
       // Validate JSON structure
-      const validation = validateDietOSState(parsed)
+      const validation = validateLifeOSState(parsed)
       if (!validation.valid || !validation.state) {
         throw new Error(validation.error || "Invalid JSON structure")
       }
@@ -423,7 +423,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
       })
     } else if (importMode === "merge") {
       // Merge strategy: combine dishes, keep current weekly plan, merge settings
-      const mergedState: DietOSState = {
+      const mergedState: LifeOSState = {
         ...state,
         dishes: [...state.dishes, ...pendingImport.dishes.filter((d) => !state.dishes.some((sd) => sd.id === d.id))],
         ingredientsIndex: [
@@ -602,7 +602,7 @@ export function SettingsView({ state, updateState }: { state: DietOSState; updat
                     const parsed = JSON.parse(rawJSONText)
 
                     // Validate JSON structure
-                    const validation = validateDietOSState(parsed)
+                    const validation = validateLifeOSState(parsed)
                     if (!validation.valid || !validation.state) {
                       throw new Error(validation.error || "Invalid JSON structure")
                     }

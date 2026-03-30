@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { useState, useMemo } from "react"
-import type { DietOSState } from "@/lib/dietos-state"
+import type { LifeOSState } from "@/lib/lifeos-state"
 import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 
 type GroupingMode = "category" | "meals" | "days"
 
-export function GroceriesView({ state }: { state: DietOSState }) {
+export function GroceriesView({ state }: { state: LifeOSState }) {
   const { toast } = useToast()
   const [groupingMode, setGroupingMode] = useState<GroupingMode>("category")
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())

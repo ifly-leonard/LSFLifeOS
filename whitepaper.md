@@ -1,8 +1,8 @@
-# DietOS - Technical Whitepaper
+# LifeOS - Technical Whitepaper
 
 ## Executive Summary
 
-DietOS is a Progressive Web Application (PWA) designed for personal meal planning and diet management. Built with a revolutionary "no backend" architecture, the application operates entirely client-side, storing all data locally in the user's browser while seamlessly integrating with external services through URL-based protocols and clipboard operations. This architecture enables instant deployment, zero server costs, and complete data privacy.
+LifeOS is a Progressive Web Application (PWA) designed for personal meal planning and diet management. Built with a revolutionary "no backend" architecture, the application operates entirely client-side, storing all data locally in the user's browser while seamlessly integrating with external services through URL-based protocols and clipboard operations. This architecture enables instant deployment, zero server costs, and complete data privacy.
 
 ---
 
@@ -14,7 +14,7 @@ DietOS is a Progressive Web Application (PWA) designed for personal meal plannin
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4.1.9
 - **UI Components**: Radix UI primitives with custom styling
-- **State Management**: React hooks with custom `useDietOS` hook
+- **State Management**: React hooks with custom `useLifeOS` hook
 - **Data Validation**: Zod schema validation
 - **Date Handling**: date-fns library
 - **PWA Support**: Service Worker with cache-first strategy
@@ -51,9 +51,9 @@ The application implements a sophisticated multi-tier storage system with automa
 
 ```typescript
 // lib/storage.ts
-const DB_NAME = "dietos_db"
+const DB_NAME = "lifeos_db"
 const STORE_NAME = "state"
-const KEY = "dietos_state"
+const KEY = "lifeos_state"
 ```
 
 **IndexedDB Advantages**:
@@ -87,7 +87,7 @@ const KEY = "dietos_state"
 The application state follows a comprehensive JSON schema:
 
 ```typescript
-type DietOSState = {
+type LifeOSState = {
   meta: {
     version: string
     lastUpdated: string
@@ -125,8 +125,8 @@ type DietOSState = {
 Every state update automatically triggers persistence:
 
 ```typescript
-// hooks/use-dietos.ts
-const updateState = async (newState: DietOSState) => {
+// hooks/use-lifeos.ts
+const updateState = async (newState: LifeOSState) => {
   const updated = {
     ...newState,
     meta: {
@@ -331,7 +331,7 @@ const exportICS = (selectedDays: string[]) => {
   const icsContent = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//DietOS//NONSGML v1.0//EN",
+    "PRODID:-//LifeOS//NONSGML v1.0//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
   ]
@@ -407,7 +407,7 @@ Steps:
 3. Toast bread
 
 ---
-Exported from DietOS v1.0.0
+Exported from LifeOS v1.0.0
 Export Date: 2024-01-15T10:30:00.000Z
 ```
 
@@ -428,9 +428,9 @@ Export Date: 2024-01-15T10:30:00.000Z
 The application maintains stateful data through React's state management:
 
 ```typescript
-// hooks/use-dietos.ts
-export function useDietOS() {
-  const [state, setState] = useState<DietOSState | null>(null)
+// hooks/use-lifeos.ts
+export function useLifeOS() {
+  const [state, setState] = useState<LifeOSState | null>(null)
 
   useEffect(() => {
     loadState().then((loadedState) => {
@@ -438,7 +438,7 @@ export function useDietOS() {
     })
   }, [])
 
-  const updateState = async (newState: DietOSState) => {
+  const updateState = async (newState: LifeOSState) => {
     const updated = {
       ...newState,
       meta: {
@@ -498,8 +498,8 @@ All data imports are validated using Zod schemas:
 
 ```typescript
 // lib/validation.ts
-export function validateDietOSState(data: unknown): ValidationResult {
-  const result = DietOSStateSchema.safeParse(data)
+export function validateLifeOSState(data: unknown): ValidationResult {
+  const result = LifeOSStateSchema.safeParse(data)
   if (result.success) {
     return { valid: true, state: result.data }
   }
@@ -513,7 +513,7 @@ The application includes intelligent meal plan randomization:
 
 ```typescript
 // lib/weekly-plan-randomizer.ts
-export function randomizeWeeklyPlan(state: DietOSState): WeeklyPlan {
+export function randomizeWeeklyPlan(state: LifeOSState): WeeklyPlan {
   // Randomizes entire week while respecting constraints:
   // - Max 1 carb-heavy dish per day
   // - Max 1 rich-protein dish per day
@@ -537,7 +537,7 @@ export function randomizeWeeklyPlan(state: DietOSState): WeeklyPlan {
 ```javascript
 // public/sw.js
 const APP_VERSION = "1.0.0"
-const CACHE_NAME = `dietos-v${APP_VERSION}`
+const CACHE_NAME = `lifeos-v${APP_VERSION}`
 
 // Cache-first strategy
 self.addEventListener("fetch", (event) => {
@@ -562,8 +562,8 @@ self.addEventListener("fetch", (event) => {
 ```json
 // public/manifest.json
 {
-  "name": "DietOS",
-  "short_name": "DietOS",
+  "name": "LifeOS",
+  "short_name": "LifeOS",
   "description": "Personal Meal Planning System",
   "start_url": "/",
   "display": "standalone",
@@ -882,7 +882,7 @@ Update meta.lastUpdated timestamp
 
 ## 15. Conclusion
 
-DietOS demonstrates that complex, feature-rich applications can be built entirely client-side with zero backend infrastructure. The "no backend" strategy provides:
+LifeOS demonstrates that complex, feature-rich applications can be built entirely client-side with zero backend infrastructure. The "no backend" strategy provides:
 
 - **Instant Deployment**: Deploy in minutes, not days
 - **Zero Infrastructure Costs**: No servers, databases, or APIs
@@ -901,7 +901,7 @@ This architecture is ideal for:
 - Rapid prototyping
 - MVP development
 
-**DietOS proves that sometimes the best backend is no backend at all.**
+**LifeOS proves that sometimes the best backend is no backend at all.**
 
 ---
 
@@ -932,7 +932,7 @@ Example:
 ```
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//DietOS//NONSGML v1.0//EN
+PRODID:-//LifeOS//NONSGML v1.0//EN
 BEGIN:VEVENT
 UID:unique-id
 DTSTART:20240115T080000Z
@@ -984,11 +984,11 @@ LSFLifeOS/
 │       ├── groceries.tsx  # Grocery list (Swiggy integration)
 │       └── settings.tsx   # Settings (Calendar export)
 ├── hooks/                 # Custom React hooks
-│   ├── use-dietos.ts      # Main app state hook
+│   ├── use-lifeos.ts      # Main app state hook
 │   └── use-toast.ts       # Toast notifications
 ├── lib/                   # Utility libraries
 │   ├── data.json          # Default meal plan data
-│   ├── dietos-state.ts    # TypeScript types
+│   ├── lifeos-state.ts    # TypeScript types
 │   ├── storage.ts         # Storage utilities (IndexedDB/localStorage)
 │   ├── validation.ts      # Data validation (Zod)
 │   ├── grocery-utils.ts    # Grocery categorization
@@ -1020,4 +1020,4 @@ LSFLifeOS/
 
 **Document Version**: 1.0.0  
 **Last Updated**: 2024  
-**Author**: DietOS Development Team
+**Author**: LifeOS Development Team

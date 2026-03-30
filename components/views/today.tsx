@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { useState, useMemo } from "react"
-import type { DietOSState } from "@/lib/dietos-state"
+import type { LifeOSState } from "@/lib/lifeos-state"
 import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import { getMealColorClasses, getMealTextColorClasses } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { Copy, Grid3x3, ChevronLeft, ChevronRight } from "lucide-react"
 
-export function TodayView({ state }: { state: DietOSState }) {
+export function TodayView({ state }: { state: LifeOSState }) {
   const [selectedDish, setSelectedDish] = useState<typeof state.dishes[0] | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())

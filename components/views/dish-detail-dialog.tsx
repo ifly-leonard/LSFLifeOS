@@ -1,6 +1,6 @@
 "use client"
 
-import type { Dish } from "@/lib/dietos-state"
+import type { Dish } from "@/lib/lifeos-state"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"

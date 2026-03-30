@@ -3,7 +3,7 @@
 import type React from "react"
 import Image from "next/image"
 
-import { Calendar, Utensils, ShoppingCart, Settings, Home, ChevronLeft } from "lucide-react"
+import { Calendar, Utensils, ShoppingCart, Settings, Home, ChevronLeft, Shirt, PlusSquare, Sparkles, ShoppingBag, LayoutDashboard } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/toaster"
 import { useState } from "react"
@@ -25,7 +25,7 @@ interface LayoutProps {
 
 const OS_NAMES: Record<string, string> = {
   launcher: "Life OS",
-  dietos: "Diet",
+  lifeos: "Diet",
   wardrobeos: "Wardrobe",
   laundryos: "Laundry",
   sops: "SOPs"
@@ -43,13 +43,23 @@ export function Layout({ children, activeTab, setActiveTab, activeApp = "launche
     }
     window.location.reload()
   }
-  const tabs = [
+  const lifeosTabs = [
     { id: "today", icon: Home, label: "Home" },
     { id: "week", icon: Calendar, label: "Planner" },
     { id: "dishes", icon: Utensils, label: "Dishes" },
     { id: "groceries", icon: ShoppingCart, label: "Groceries" },
     { id: "settings", icon: Settings, label: "Settings" },
   ]
+
+  const wardrobeosTabs = [
+    { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { id: "planner", icon: Calendar, label: "Planner" },
+    { id: "add_new", icon: PlusSquare, label: "Add" },
+    { id: "inventory", icon: Shirt, label: "Inventory" },
+    { id: "shopping", icon: ShoppingBag, label: "Shop" },
+  ]
+
+  const tabs = activeApp === "lifeos" ? lifeosTabs : activeApp === "wardrobeos" ? wardrobeosTabs : []
 
   const title = OS_NAMES[activeApp] || "Life OS"
 
@@ -82,7 +92,7 @@ export function Layout({ children, activeTab, setActiveTab, activeApp = "launche
 
       <main className="flex-1 overflow-y-auto p-6 pb-24">{children}</main>
 
-      {activeApp === "dietos" && activeTab && setActiveTab && (
+      {["lifeos", "wardrobeos"].includes(activeApp || "") && activeTab && setActiveTab && tabs.length > 0 && (
         <nav className="fixed bottom-0 w-full max-w-[390px] bg-white border-t border-border flex justify-around items-center py-4 z-50">
           {tabs.map((tab) => (
             <button

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import type { DietOSState, WeeklyPlan } from "@/lib/dietos-state"
+import type { LifeOSState, WeeklyPlan } from "@/lib/lifeos-state"
 import { randomizeWeeklyPlan } from "@/lib/weekly-plan-randomizer"
 import { ChevronDown, ChevronUp, Shuffle, ArrowUpFromLine, Edit, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,7 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { getMealTextColorClasses } from "@/lib/utils"
 
-export function WeekView({ state, updateState }: { state: DietOSState; updateState: (s: DietOSState) => void }) {
+export function WeekView({ state, updateState }: { state: LifeOSState; updateState: (s: LifeOSState) => void }) {
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
   const [expandedDay, setExpandedDay] = useState<string | null>(
     days[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1],
@@ -189,7 +189,7 @@ export function WeekView({ state, updateState }: { state: DietOSState; updateSta
     const icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//DietOS//NONSGML v1.0//EN",
+      "PRODID:-//LifeOS//NONSGML v1.0//EN",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
     ]
@@ -316,9 +316,9 @@ export function WeekView({ state, updateState }: { state: DietOSState; updateSta
           const end = endDate.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
 
           const mealBudget = budgets[mealType as keyof typeof budgets]
-          const description = `Eating out - Calorie budget: ${mealBudget} kcal\\n\\n---\\nExported from DietOS v${state.meta.version}\\nExport Date: ${exportTimestamp}`
+          const description = `Eating out - Calorie budget: ${mealBudget} kcal\\n\\n---\\nExported from LifeOS v${state.meta.version}\\nExport Date: ${exportTimestamp}`
           const summary = `[${mealType.toUpperCase()}] Eating out - Calorie budget ${mealBudget} kcal`
-          const uid = `dietos-${day.toLowerCase()}-${mealType.toLowerCase()}-${Date.now()}-${Math.random().toString(36).substring(7)}`
+          const uid = `lifeos-${day.toLowerCase()}-${mealType.toLowerCase()}-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
           icsContent.push("BEGIN:VEVENT")
           icsContent.push(`UID:${uid}`)
@@ -392,14 +392,14 @@ export function WeekView({ state, updateState }: { state: DietOSState; updateSta
           ...dish.steps.map((step, idx) => `${idx + 1}. ${step}`),
           "",
           "---",
-          `Exported from DietOS v${state.meta.version}`,
+          `Exported from LifeOS v${state.meta.version}`,
           `Export Date: ${exportTimestamp}`,
         ]
 
         const description = descriptionParts.filter((part) => part !== "").join("\\n")
         
         // Generate unique ID for this event
-        const uid = `dietos-${day.toLowerCase()}-${mealType.toLowerCase()}-${Date.now()}-${Math.random().toString(36).substring(7)}`
+        const uid = `lifeos-${day.toLowerCase()}-${mealType.toLowerCase()}-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
         const summary = `[${mealType.toUpperCase()}] ${dish.name} (${dish.prepTime} min)`
 
@@ -424,7 +424,7 @@ export function WeekView({ state, updateState }: { state: DietOSState; updateSta
     const hours = String(exportDate.getHours()).padStart(2, "0")
     const minutes = String(exportDate.getMinutes()).padStart(2, "0")
     const seconds = String(exportDate.getSeconds()).padStart(2, "0")
-    const filename = `dietos_plan_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.ics`
+    const filename = `lifeos_plan_${year}-${month}-${day}_${hours}-${minutes}-${seconds}.ics`
 
     const element = document.createElement("a")
     const file = new Blob([icsContent.join("\r\n")], { type: "text/calendar" })

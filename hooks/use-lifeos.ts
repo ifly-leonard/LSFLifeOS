@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { type DietOSState } from "@/lib/dietos-state"
+import { type LifeOSState } from "@/lib/lifeos-state"
 import { loadState, saveState } from "@/lib/storage"
 
-export function useDietOS() {
-  const [state, setState] = useState<DietOSState | null>(null)
+export function useLifeOS() {
+  const [state, setState] = useState<LifeOSState | null>(null)
 
   useEffect(() => {
     loadState().then((loadedState) => {
@@ -13,7 +13,7 @@ export function useDietOS() {
     })
   }, [])
 
-  const updateState = async (newState: DietOSState) => {
+  const updateState = async (newState: LifeOSState) => {
     const updated = {
       ...newState,
       meta: {

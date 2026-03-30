@@ -22,7 +22,7 @@ export type WeeklyPlan = {
   }
 }
 
-export type DietOSState = {
+export type LifeOSState = {
   meta: {
     version: string
     lastUpdated: string
@@ -39,13 +39,19 @@ export type DietOSState = {
       protein: number
     }
     timezone: string
+    wardrobe: {
+      skinTone: string
+      skinToneImage?: string
+      bodyType: string
+      dressingPreference: string
+    }
   }
   weeklyPlan: WeeklyPlan
   dishes: Dish[]
   ingredientsIndex: string[]
 }
 
-export const INITIAL_STATE: DietOSState = {
+export const INITIAL_STATE: LifeOSState = {
   meta: {
     version: "1.0.0",
     lastUpdated: new Date().toISOString(),
@@ -62,6 +68,11 @@ export const INITIAL_STATE: DietOSState = {
       protein: 150,
     },
     timezone: "Asia/Kolkata",
+    wardrobe: {
+      skinTone: "#e0ac69",
+      bodyType: "athletic",
+      dressingPreference: "minimalist"
+    }
   },
   weeklyPlan: {
     Monday: { breakfast: "1", lunch: "2", snack: "3", dinner: "4" },

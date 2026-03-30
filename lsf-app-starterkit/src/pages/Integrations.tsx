@@ -20,7 +20,7 @@ const Integrations: React.FC = () => {
             color: 'var(--lsf-text-muted)',
           }}
         >
-          Each card mirrors something that already exists in DietOS or the GFF
+          Each card mirrors something that already exists in LifeOS or the GFF
           mobile app so you can reuse the patterns, not re-invent them.
         </p>
       </section>
@@ -30,7 +30,7 @@ const Integrations: React.FC = () => {
           WhatsApp share
         </h3>
         <p style={{ fontSize: 13, color: 'var(--lsf-text-muted)', marginBottom: 10 }}>
-          Inspired by the DietOS Today view. Generate a concise human-readable
+          Inspired by the LifeOS Today view. Generate a concise human-readable
           summary and deep-link to the WhatsApp app.
         </p>
         <PrimaryButton onClick={() => history.push('/integrations/whatsapp')}>
@@ -43,7 +43,7 @@ const Integrations: React.FC = () => {
           JSON config import / export
         </h3>
         <p style={{ fontSize: 13, color: 'var(--lsf-text-muted)', marginBottom: 10 }}>
-          Based on DietOS Settings. Export in-memory state as JSON, validate
+          Based on LifeOS Settings. Export in-memory state as JSON, validate
           imports, and support overwrite vs merge.
         </p>
         <PrimaryButton onClick={() => history.push('/integrations/json-config')}>
@@ -56,7 +56,7 @@ const Integrations: React.FC = () => {
           Calendar export (.ics)
         </h3>
         <p style={{ fontSize: 13, color: 'var(--lsf-text-muted)', marginBottom: 10 }}>
-          Minimal ICS export using the same approach as DietOS, ready to import
+          Minimal ICS export using the same approach as LifeOS, ready to import
           into Google Calendar.
         </p>
         <PrimaryButton onClick={() => history.push('/integrations/calendar')}>

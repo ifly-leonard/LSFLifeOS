@@ -1,5 +1,5 @@
 const APP_VERSION = "1.0.0"
-const CACHE_NAME = `dietos-v${APP_VERSION}`
+const CACHE_NAME = `lifeos-v${APP_VERSION}`
 const urlsToCache = [
   "/",
   "/icon-light-32x32.png",

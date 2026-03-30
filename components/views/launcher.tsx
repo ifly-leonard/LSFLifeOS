@@ -15,7 +15,7 @@ interface AppOption {
 }
 
 const apps: AppOption[] = [
-  { id: "dietos", name: "Diet", icon: Utensils },
+  { id: "lifeos", name: "Diet", icon: Utensils },
   { id: "wardrobeos", name: "Wardrobe", icon: Shirt },
   { id: "laundryos", name: "Laundry", icon: WashingMachine },
   { id: "sops", name: "SOPs", icon: FileText },

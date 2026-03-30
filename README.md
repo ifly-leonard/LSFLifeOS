@@ -1,4 +1,4 @@
-# DietOS - Personal Meal Planning System
+# LifeOS - Personal Meal Planning System
 
 A modern, customizable meal planning application built with Next.js, React, and TypeScript. Plan your weekly meals, track nutritional targets, manage your dish library, and export your meal plan to your calendar.
 
@@ -26,7 +26,7 @@ Before you begin, ensure you have the following installed:
 
 ```bash
 git clone <your-repository-url>
-cd DietOS
+cd LifeOS
 ```
 
 ### 2. Install Dependencies
@@ -229,7 +229,7 @@ The app uses Tailwind CSS. Modify styles in:
 
 ## ChatGPT Prompts for Building Your Diet Chart
 
-Use these prompts with ChatGPT to generate a personalized meal plan that you can then import into DietOS.
+Use these prompts with ChatGPT to generate a personalized meal plan that you can then import into LifeOS.
 
 ### Prompt 1: Generate Complete Weekly Meal Plan
 
@@ -430,7 +430,7 @@ Format the output as a JSON array matching this structure:
 ]
 ```
 
-## Converting ChatGPT Output to DietOS Format
+## Converting ChatGPT Output to LifeOS Format
 
 After getting output from ChatGPT, you'll need to:
 
@@ -482,7 +482,7 @@ You can use this structure to manually convert ChatGPT's output:
 ## Project Structure
 
 ```
-DietOS/
+LifeOS/
 ├── app/                    # Next.js app directory
 │   ├── globals.css        # Global styles
 │   ├── layout.tsx         # Root layout
@@ -499,11 +499,11 @@ DietOS/
 │       ├── groceries.tsx  # Grocery list view
 │       └── settings.tsx   # Settings view
 ├── hooks/                 # Custom React hooks
-│   ├── use-dietos.ts      # Main app state hook
+│   ├── use-lifeos.ts      # Main app state hook
 │   └── use-toast.ts       # Toast notifications
 ├── lib/                   # Utility libraries
 │   ├── data.json          # Default meal plan data
-│   ├── dietos-state.ts    # TypeScript types
+│   ├── lifeos-state.ts    # TypeScript types
 │   ├── storage.ts         # Local storage utilities
 │   ├── validation.ts      # Data validation
 │   └── utils.ts           # Helper functions

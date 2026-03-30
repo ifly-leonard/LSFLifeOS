@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useDietOS } from "@/hooks/use-dietos"
+import { useLifeOS } from "@/hooks/use-lifeos"
 import { useToast } from "@/hooks/use-toast"
 import { Layout } from "@/components/layout"
 import { SplashScreen } from "@/components/splash-screen"
@@ -12,12 +12,16 @@ import { GroceriesView } from "@/components/views/groceries"
 import { SettingsView } from "@/components/views/settings"
 import { LauncherView } from "@/components/views/launcher"
 import { PlaceholderAppView } from "@/components/views/placeholder-app"
+import { WardrobeOSView } from "@/components/views/wardrobeos"
+import { WardrobeDashboardView } from "@/components/views/wardrobe-dashboard"
+import { WardrobePlannerView } from "@/components/views/wardrobe-planner"
+import { WardrobeSettingsView } from "@/components/views/wardrobe-settings"
 
-const VERSION_STORAGE_KEY = "dietos_app_version"
+const VERSION_STORAGE_KEY = "lifeos_app_version"
 const CURRENT_VERSION = "1.5.0"
 
-export default function DietOSApp() {
-  const { state, updateState } = useDietOS()
+export default function LifeOSApp() {
+  const { state, updateState } = useLifeOS()
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("today")
   const [activeApp, setActiveApp] = useState("launcher")
@@ -26,7 +30,12 @@ export default function DietOSApp() {
 
   useEffect(() => {
     activeAppRef.current = activeApp
-  }, [activeApp])
+    if (activeApp === "wardrobeos" && !["dashboard", "inventory", "add_new", "planner", "shopping", "settings"].includes(activeTab)) {
+      setActiveTab("dashboard")
+    } else if (activeApp === "lifeos" && !["today", "week", "dishes", "groceries", "settings"].includes(activeTab)) {
+      setActiveTab("today")
+    }
+  }, [activeApp, activeTab])
 
   useEffect(() => {
     let backPressCount = 0
@@ -125,14 +134,14 @@ export default function DietOSApp() {
   return (
     <>
       {showSplash && <SplashScreen onDismiss={handleDismissSplash} />}
-      <Layout 
-        activeTab={activeTab} 
+      <Layout
+        activeTab={activeTab}
         setActiveTab={setActiveTab}
         activeApp={activeApp}
         setActiveApp={setActiveApp}
       >
         {activeApp === "launcher" && <LauncherView onSelectApp={setActiveApp} />}
-        {activeApp === "dietos" && (
+        {activeApp === "lifeos" && (
           <>
             {activeTab === "today" && <TodayView state={state} />}
             {activeTab === "week" && <WeekView state={state} updateState={updateState} />}
@@ -141,11 +150,19 @@ export default function DietOSApp() {
             {activeTab === "settings" && <SettingsView state={state} updateState={updateState} />}
           </>
         )}
-        {["wardrobeos", "laundryos", "sops"].includes(activeApp) && (
+        {activeApp === "wardrobeos" && (
+          <>
+            {(activeTab === "dashboard" || !["dashboard", "inventory", "add_new", "planner", "shopping", "settings"].includes(activeTab)) && <WardrobeDashboardView onNavigate={setActiveTab} state={state} />}
+            {activeTab === "inventory" && <WardrobeOSView />}
+            {activeTab === "add_new" && <PlaceholderAppView name="Add New" />}
+            {activeTab === "planner" && <WardrobePlannerView />}
+            {activeTab === "shopping" && <PlaceholderAppView name="Shopping" />}
+            {activeTab === "settings" && <WardrobeSettingsView state={state} updateState={updateState} onNavigate={setActiveTab} />}
+          </>
+        )}
+        {["laundryos", "sops"].includes(activeApp) && (
           <PlaceholderAppView name={
-            activeApp === "wardrobeos" ? "Wardrobe OS" : 
-            activeApp === "laundryos" ? "Laundry OS" : 
-            "SOPs"
+            activeApp === "laundryos" ? "Laundry OS" : "SOPs"
           } />
         )}
       </Layout>

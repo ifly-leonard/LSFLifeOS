@@ -1,10 +1,10 @@
-import { type DietOSState, INITIAL_STATE, type Dish } from "./dietos-state"
+import { type LifeOSState, INITIAL_STATE, type Dish } from "./lifeos-state"
 import defaultData from "./data.json"
 
-const DB_NAME = "dietos_db"
+const DB_NAME = "lifeos_db"
 const STORE_NAME = "state"
-const KEY = "dietos_state"
-const STORAGE_KEY = "dietos_state"
+const KEY = "lifeos_state"
+const STORAGE_KEY = "lifeos_state"
 
 let dbInstance: IDBDatabase | null = null
 
@@ -34,7 +34,7 @@ async function openDB(): Promise<IDBDatabase> {
   })
 }
 
-async function loadFromIndexedDB(): Promise<DietOSState | null> {
+async function loadFromIndexedDB(): Promise<LifeOSState | null> {
   try {
     const db = await openDB()
     return new Promise((resolve, reject) => {
@@ -54,7 +54,7 @@ async function loadFromIndexedDB(): Promise<DietOSState | null> {
   }
 }
 
-function loadFromLocalStorage(): DietOSState | null {
+function loadFromLocalStorage(): LifeOSState | null {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (!saved) return null
@@ -65,7 +65,7 @@ function loadFromLocalStorage(): DietOSState | null {
   }
 }
 
-async function saveToIndexedDB(state: DietOSState): Promise<void> {
+async function saveToIndexedDB(state: LifeOSState): Promise<void> {
   try {
     const db = await openDB()
     return new Promise((resolve, reject) => {
@@ -82,7 +82,7 @@ async function saveToIndexedDB(state: DietOSState): Promise<void> {
   }
 }
 
-function saveToLocalStorage(state: DietOSState): void {
+function saveToLocalStorage(state: LifeOSState): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   } catch (error) {
@@ -90,7 +90,7 @@ function saveToLocalStorage(state: DietOSState): void {
   }
 }
 
-function migrateDishState(state: DietOSState): DietOSState {
+function migrateDishState(state: LifeOSState): LifeOSState {
   // Ensure all dishes have disabled field (defaults to false if missing)
   const migratedDishes = state.dishes.map((dish) => ({
     ...dish,
@@ -110,12 +110,12 @@ function migrateDishState(state: DietOSState): DietOSState {
   }
 }
 
-function cleanupDisabledDishesFromPlan(state: DietOSState): DietOSState {
+function cleanupDisabledDishesFromPlan(state: LifeOSState): LifeOSState {
   const enabledDishIds = new Set(
     state.dishes.filter((d) => !d.disabled).map((d) => d.id)
   )
 
-  const cleanedPlan: DietOSState["weeklyPlan"] = {}
+  const cleanedPlan: LifeOSState["weeklyPlan"] = {}
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
   for (const day of days) {
@@ -156,8 +156,8 @@ function cleanupDisabledDishesFromPlan(state: DietOSState): DietOSState {
   }
 }
 
-export async function loadState(): Promise<DietOSState> {
-  let state: DietOSState | null = null
+export async function loadState(): Promise<LifeOSState> {
+  let state: LifeOSState | null = null
 
   // Try IndexedDB first
   const indexedDBState = await loadFromIndexedDB()
@@ -179,7 +179,7 @@ export async function loadState(): Promise<DietOSState> {
 
   // If no state found, use default data
   if (!state) {
-    state = defaultData as unknown as DietOSState
+    state = defaultData as unknown as LifeOSState
   }
 
   // Apply migrations (this will ensure timezone is set)
@@ -189,7 +189,7 @@ export async function loadState(): Promise<DietOSState> {
   return state
 }
 
-export async function saveState(state: DietOSState): Promise<void> {
+export async function saveState(state: LifeOSState): Promise<void> {
   // Try IndexedDB first
   try {
     await saveToIndexedDB(state)

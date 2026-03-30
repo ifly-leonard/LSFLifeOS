@@ -1,6 +1,6 @@
 {
-  "name": "DietOS",
-  "short_name": "DietOS",
+  "name": "LifeOS",
+  "short_name": "LifeOS",
   "description": "Mobile-first PWA for meal planning and diet management - Designed for Leonard Selvaraja Fernando",
   "start_url": "/",
   "scope": "/",
