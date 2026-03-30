@@ -1,28 +1,41 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search, Plus, Filter } from "lucide-react"
+import { Search, Plus, Filter, BookOpen, LayoutGrid, Trash2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { WardrobeImage } from "@/components/wardrobe-image"
 
 import {
   Category,
   Color,
   Formality,
-  DUMMY_WARDROBE,
   WardrobeItem,
   Status
 } from "@/lib/wardrobe-data"
+import { useWardrobeInventory } from "@/contexts/wardrobe-inventory-context"
+import { WardrobeLookbookView } from "@/components/views/wardrobe-lookbook-free"
+import { deleteWardrobeImage } from "@/lib/wardrobe/local-image-storage"
 
 const NEUTRAL_COLORS = [Color.Black, Color.White, Color.Grey, Color.Beige, Color.Brown, Color.Navy]
 const ACCENT_COLORS = Object.values(Color).filter(c => !NEUTRAL_COLORS.includes(c))
 
-export function WardrobeOSView() {
-  const [items, setItems] = useState<WardrobeItem[]>(DUMMY_WARDROBE)
+function isWearableStatus(s: Status): boolean {
+  return s === Status.Ready || s === Status.Clean
+}
+
+interface WardrobeOSViewProps {
+  onNavigate?: (tab: string) => void
+}
+
+export function WardrobeOSView({ onNavigate }: WardrobeOSViewProps) {
+  const { items, updateItem } = useWardrobeInventory()
+  const [inventoryMode, setInventoryMode] = useState<"browse" | "lookbook">("browse")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<Category | "all">("all")
   const [selectedFormality, setSelectedFormality] = useState<Formality | "all">("all")
@@ -105,8 +118,17 @@ export function WardrobeOSView() {
     setDialogOpen(true)
   }
 
+  const handleDeleteImage = async () => {
+    if (!selectedItem?.image_url) return
+    const ok = await deleteWardrobeImage(selectedItem.image_url)
+    if (!ok) return
+    updateItem(selectedItem.id, { image_url: "" })
+    setSelectedItem({ ...selectedItem, image_url: "" })
+  }
+
   const getStatusColor = (status: Status) => {
     switch (status) {
+      case Status.Ready: return "bg-sky-500"
       case Status.Clean: return "bg-green-500"
       case Status.Dirty: return "bg-red-500"
       case Status.Ironing: return "bg-yellow-500"
@@ -117,20 +139,58 @@ export function WardrobeOSView() {
   return (
     <div className="space-y-6 pb-24">
       {/* Header */}
-      <div className="flex justify-between items-end border-b-2 border-primary pb-2">
-        <div className="flex flex-col">
-          <h2 className="text-xl font-black uppercase tracking-tighter">Inventory</h2>
-          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-            Browse and coordinate your wardrobe
-          </p>
+      <div className="border-b-2 border-primary pb-2">
+        <div className="flex justify-between items-end">
+          <div className="flex flex-col min-w-0">
+            <h2 className="text-xl font-black uppercase tracking-tighter">Inventory</h2>
+            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+              {inventoryMode === "browse"
+                ? "Browse and coordinate your wardrobe"
+                : "Build looks on the canvas and save named styles"}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="bg-primary text-white p-1 hover:opacity-90 transition-opacity shrink-0"
+            onClick={() => onNavigate?.("add_new")}
+          >
+            <Plus size={20} />
+          </button>
         </div>
-        <button
-          className="bg-primary text-white p-1 hover:opacity-90 transition-opacity"
-        >
-          <Plus size={20} />
-        </button>
+        <div className="flex gap-1.5 mt-3">
+          <button
+            type="button"
+            onClick={() => setInventoryMode("browse")}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-1.5 border-2 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors",
+              inventoryMode === "browse"
+                ? "border-primary bg-primary text-white"
+                : "border-primary/20 bg-muted/30 text-muted-foreground hover:border-primary/40",
+            )}
+          >
+            <LayoutGrid size={14} />
+            Browse
+          </button>
+          <button
+            type="button"
+            onClick={() => setInventoryMode("lookbook")}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-1.5 border-2 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors",
+              inventoryMode === "lookbook"
+                ? "border-primary bg-primary text-white"
+                : "border-primary/20 bg-muted/30 text-muted-foreground hover:border-primary/40",
+            )}
+          >
+            <BookOpen size={14} />
+            Look book
+          </button>
+        </div>
       </div>
 
+      {inventoryMode === "lookbook" ? (
+        <WardrobeLookbookView />
+      ) : (
+        <>
       {/* Stats Card */}
       <Card 
         className="p-4 border-2 border-primary/20 bg-muted/10 cursor-pointer hover:bg-muted/30 transition-colors" 
@@ -142,8 +202,8 @@ export function WardrobeOSView() {
             <span className="text-lg font-black">{items.length}</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Currently Clean</span>
-            <span className="text-lg font-black text-green-600">{items.filter(i => i.status === Status.Clean).length}</span>
+            <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Ready / clean</span>
+            <span className="text-lg font-black text-green-600">{items.filter(i => isWearableStatus(i.status)).length}</span>
           </div>
           <div className="flex flex-col items-end justify-center">
              <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest border-2 border-primary bg-primary text-white px-2 py-1">
@@ -353,14 +413,14 @@ export function WardrobeOSView() {
               onClick={() => handleItemClick(item)}
             >
               <div className="relative aspect-[4/5] bg-muted w-full mb-2 border border-border">
-                <img 
-                  src={item.image_url} 
+                <WardrobeImage
+                  src={item.image_url}
                   alt={item.title}
                   className="object-cover w-full h-full mix-blend-multiply"
                   loading="lazy"
                 />
                 <div className="absolute top-1 left-1 flex gap-1 flex-col">
-                  {item.status !== Status.Clean && (
+                  {!isWearableStatus(item.status) && (
                     <span className="text-[6px] font-black uppercase tracking-widest bg-red-500 text-white px-1 py-0.5">
                       {item.status}
                     </span>
@@ -404,6 +464,7 @@ export function WardrobeOSView() {
                     {selectedItem.formality.replace("_", " ")}
                   </span>
                   <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 text-white ${
+                    selectedItem.status === Status.Ready ? "bg-sky-600" :
                     selectedItem.status === Status.Clean ? "bg-green-600" :
                     selectedItem.status === Status.Dirty ? "bg-red-600" : "bg-yellow-600"
                   }`}>
@@ -412,14 +473,26 @@ export function WardrobeOSView() {
                 </div>
 
                 <div className="aspect-square bg-muted w-full border-2 border-primary/20 relative">
-                  <img 
-                    src={selectedItem.image_url} 
-                    alt={selectedItem.title} 
+                  <WardrobeImage
+                    src={selectedItem.image_url}
+                    alt={selectedItem.title}
                     className="w-full h-full object-cover mix-blend-multiply"
                   />
                   <div className="absolute bottom-2 right-2 bg-white/90 p-2 border-2 border-primary font-black uppercase tracking-widest text-[10px]">
                     Wears: {selectedItem.wear_count}
                   </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-2 text-[10px] font-black uppercase tracking-widest"
+                    disabled={!selectedItem.image_url}
+                    onClick={() => void handleDeleteImage()}
+                  >
+                    <Trash2 size={12} className="mr-1" />
+                    Delete Image
+                  </Button>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
@@ -481,6 +554,8 @@ export function WardrobeOSView() {
           )}
         </DialogContent>
       </Dialog>
+        </>
+      )}
     </div>
   )
 }

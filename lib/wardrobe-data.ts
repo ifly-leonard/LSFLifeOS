@@ -68,6 +68,7 @@ export enum Formality {
 }
 
 export enum Status {
+  Ready = "ready",
   Clean = "clean",
   Dirty = "dirty",
   Ironing = "ironing"
@@ -88,6 +89,9 @@ export interface WardrobeItem {
   status: Status;
   wear_count: number;
   last_worn: string;
+  brand?: string;
+  size?: string;
+  notes?: string;
 }
 
 export const DUMMY_WARDROBE: WardrobeItem[] = [

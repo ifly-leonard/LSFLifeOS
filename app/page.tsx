@@ -16,6 +16,8 @@ import { WardrobeOSView } from "@/components/views/wardrobeos"
 import { WardrobeDashboardView } from "@/components/views/wardrobe-dashboard"
 import { WardrobePlannerView } from "@/components/views/wardrobe-planner"
 import { WardrobeSettingsView } from "@/components/views/wardrobe-settings"
+import { WardrobeAddItemView } from "@/components/views/wardrobe-add-item"
+import { WardrobeInventoryProvider } from "@/contexts/wardrobe-inventory-context"
 
 const VERSION_STORAGE_KEY = "lifeos_app_version"
 const CURRENT_VERSION = "1.5.0"
@@ -151,14 +153,23 @@ export default function LifeOSApp() {
           </>
         )}
         {activeApp === "wardrobeos" && (
-          <>
-            {(activeTab === "dashboard" || !["dashboard", "inventory", "add_new", "planner", "shopping", "settings"].includes(activeTab)) && <WardrobeDashboardView onNavigate={setActiveTab} state={state} />}
-            {activeTab === "inventory" && <WardrobeOSView />}
-            {activeTab === "add_new" && <PlaceholderAppView name="Add New" />}
-            {activeTab === "planner" && <WardrobePlannerView />}
+          <WardrobeInventoryProvider>
+            {(activeTab === "dashboard" || !["dashboard", "inventory", "lookbook", "add_new", "planner", "shopping", "settings"].includes(activeTab)) && <WardrobeDashboardView onNavigate={setActiveTab} state={state} />}
+            {activeTab === "inventory" && <WardrobeOSView onNavigate={setActiveTab} />}
+            {activeTab === "add_new" && (
+              <WardrobeAddItemView
+                onSaved={() => setActiveTab("inventory")}
+                onCancel={() => setActiveTab("dashboard")}
+              />
+            )}
+            {activeTab === "planner" && (
+              <WardrobePlannerView
+                skinToneHex={state.settings.wardrobe?.skinTone ?? "#e0ac69"}
+              />
+            )}
             {activeTab === "shopping" && <PlaceholderAppView name="Shopping" />}
             {activeTab === "settings" && <WardrobeSettingsView state={state} updateState={updateState} onNavigate={setActiveTab} />}
-          </>
+          </WardrobeInventoryProvider>
         )}
         {["laundryos", "sops"].includes(activeApp) && (
           <PlaceholderAppView name={

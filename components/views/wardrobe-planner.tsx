@@ -1,13 +1,25 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sparkles, RefreshCcw, Save, CalendarPlus, CalendarDays, Trash2 } from "lucide-react"
-import { Status, Category, DUMMY_WARDROBE, WardrobeItem } from "@/lib/wardrobe-data"
-import { buildBestOutfit, getValidSwapItem, analyzeOutfit } from "@/lib/color-engine"
+import { Sparkles, RefreshCcw, Save, CalendarPlus, CalendarDays, Trash2, LayoutGrid } from "lucide-react"
+import { Category, Status, WardrobeItem } from "@/lib/wardrobe-data"
+import { useWardrobeInventory } from "@/contexts/wardrobe-inventory-context"
+import {
+  recommendOutfitsForApp,
+  appOutfitFromRecommendation,
+  appWardrobeToEngineItems,
+  evaluateOutfitRecommendation,
+  plannerEventToEngineContext,
+  bestSwapForAppOutfit,
+} from "@/lib/outfit-engine"
 import { toast } from "sonner"
+import { WardrobePlannedOutfitDetail } from "@/components/wardrobe-planned-outfit-detail"
+import { WARDROBE_PLAN_STORAGE_KEY } from "@/lib/wardrobe-plan"
+import { PLANNER_EVENT_OPTIONS } from "@/lib/wardrobe-planner-events"
+import { WardrobePlannerManualLookDialog } from "@/components/wardrobe-planner-manual-look-dialog"
 
 type DayPlan = {
   id: string
@@ -18,26 +30,6 @@ type DayPlan = {
   eventType: string
   outfit: WardrobeItem[] | null
 }
-
-const EVENT_FORMALITY_MAP: Record<string, string> = {
-  deep_work: "casual",
-  office_day: "smart_casual",
-  investor_pitch: "formal",
-  networking: "smart_casual",
-  media_appearance: "smart_casual",
-  travel: "casual",
-  gala_dinner: "formal"
-}
-
-const EVENT_OPTIONS = [
-  { value: "deep_work", label: "Deep Work / Focus" },
-  { value: "office_day", label: "Office / Team Sync" },
-  { value: "investor_pitch", label: "Investor Pitch" },
-  { value: "media_appearance", label: "Podcast / Media" },
-  { value: "networking", label: "Networking / Dinner" },
-  { value: "travel", label: "Airport / Travel" },
-  { value: "gala_dinner", label: "Gala / Event" }
-]
 
 const getInitialWeek = (): DayPlan[] => {
    const today = new Date()
@@ -67,14 +59,38 @@ const getInitialWeek = (): DayPlan[] => {
    return days
 }
 
-export function WardrobePlannerView() {
+interface WardrobePlannerViewProps {
+  skinToneHex?: string
+}
+
+function isSwapCandidateStatus(s: Status): boolean {
+  return s === Status.Ready || s === Status.Clean
+}
+
+export function WardrobePlannerView({
+  skinToneHex = "#e0ac69",
+}: WardrobePlannerViewProps) {
+  const { items: wardrobeItems } = useWardrobeInventory()
   const [weekPlan, setWeekPlan] = useState<DayPlan[]>([])
   const [phase, setPhase] = useState<'setup' | 'review'>('setup')
   const [isGenerating, setIsGenerating] = useState(false)
   const [spinningDays, setSpinningDays] = useState<Record<string, boolean>>({})
+  /** Per-day offset into ranked `recommendOutfits` (deterministic “next look”). */
+  const outfitVariantRef = useRef<Record<string, number>>({})
+  const [manualBuildDayId, setManualBuildDayId] = useState<string | null>(null)
 
   useEffect(() => {
-    const saved = localStorage.getItem("lifeos_wardrobe_plan")
+    if (phase !== "review" || weekPlan.length === 0) return
+    try {
+      localStorage.setItem(WARDROBE_PLAN_STORAGE_KEY, JSON.stringify(weekPlan))
+      window.dispatchEvent(new Event("wardrobe-plan-updated"))
+    } catch {
+      /* storage full or disabled */
+    }
+  }, [weekPlan, phase])
+
+  useEffect(() => {
+    const saved = localStorage.getItem(WARDROBE_PLAN_STORAGE_KEY)
     if (saved) {
       try {
         const parsed = JSON.parse(saved)
@@ -91,26 +107,42 @@ export function WardrobePlannerView() {
     setWeekPlan(getInitialWeek())
   }, [])
 
-  const generateSingleOutfit = (eventType: string) => {
-    const available = DUMMY_WARDROBE.filter(i => i.status === Status.Clean)
-    
-    const targetFormality = EVENT_FORMALITY_MAP[eventType] || "casual"
-    let formalityMatch = available.filter(i => i.formality === targetFormality)
-    
-    if (formalityMatch.length < 3) {
-      formalityMatch = available
+  const generateSingleOutfit = (
+    eventKey: string,
+    dayId: string,
+    opts?: { advanceVariant?: boolean; resetVariant?: boolean },
+  ) => {
+    if (opts?.resetVariant) outfitVariantRef.current[dayId] = 0
+    if (opts?.advanceVariant) {
+      outfitVariantRef.current[dayId] =
+        (outfitVariantRef.current[dayId] ?? 0) + 1
     }
+    const ctx = plannerEventToEngineContext(eventKey)
+    const recs = recommendOutfitsForApp(
+      skinToneHex,
+      wardrobeItems,
+      { eventType: ctx.eventType, formality: ctx.formality },
+      40,
+    )
+    if (!recs.length) return []
+    const v = outfitVariantRef.current[dayId] ?? 0
+    const pick = recs[v % recs.length]
+    return appOutfitFromRecommendation(pick, wardrobeItems)
+  }
 
-    const tops = formalityMatch.filter(i => i.category === Category.Tops)
-    const bottoms = formalityMatch.filter(i => i.category === Category.Bottoms)
-    const footwear = formalityMatch.filter(i => i.category === Category.Footwear)
-    const accessories = formalityMatch.filter(i => i.category === Category.Accessories)
-
-    const fallbackCategory = (c: string) => available.filter(i => i.category === c as unknown as Category)
-
-    const bestOutfit = buildBestOutfit(tops, bottoms, footwear, accessories, fallbackCategory)
-    
-    return bestOutfit || []
+  /** Review phase: changing event re-runs the engine for that day (ranked pick #0). */
+  const setDayEventTypeInReview = (dayId: string, eventType: string) => {
+    setWeekPlan((prev) =>
+      prev.map((d) => {
+        if (d.id !== dayId) return d
+        const next = { ...d, eventType }
+        if (phase === "review" && d.goingOut) {
+          outfitVariantRef.current[dayId] = 0
+          next.outfit = generateSingleOutfit(eventType, dayId, {})
+        }
+        return next
+      }),
+    )
   }
 
   const handleAutoPlan = () => {
@@ -118,7 +150,11 @@ export function WardrobePlannerView() {
     setTimeout(() => {
       setWeekPlan(prev => prev.map(day => {
         if (day.goingOut) {
-          return { ...day, outfit: generateSingleOutfit(day.eventType) }
+          outfitVariantRef.current[day.id] = 0
+          return {
+            ...day,
+            outfit: generateSingleOutfit(day.eventType, day.id, {}),
+          }
         }
         return { ...day, outfit: null }
       }))
@@ -132,7 +168,14 @@ export function WardrobePlannerView() {
     setTimeout(() => {
       setWeekPlan(prev => prev.map(day => {
         if (day.id === id) {
-          return { ...day, outfit: generateSingleOutfit(eventType) }
+          const hadOutfit = Boolean(day.outfit && day.outfit.length > 0)
+          return {
+            ...day,
+            outfit: generateSingleOutfit(eventType, id, {
+              advanceVariant: hadOutfit,
+              resetVariant: !hadOutfit,
+            }),
+          }
         }
         return day
       }))
@@ -143,19 +186,23 @@ export function WardrobePlannerView() {
   const handleSwapSingleItem = (dayId: string, itemToSwap: WardrobeItem, eventType: string) => {
       setWeekPlan(prev => prev.map(day => {
           if (day.id === dayId && day.outfit) {
-              const available = DUMMY_WARDROBE.filter(i => i.status === Status.Clean && i.category === itemToSwap.category && i.id !== itemToSwap.id)
-              
-              const targetFormality = EVENT_FORMALITY_MAP[eventType] || "casual"
-              let match = available.filter(i => i.formality === targetFormality)
-              
-              if (match.length === 0) match = available
-              
-              if (match.length > 0) {
-                  const newItem = getValidSwapItem(day.outfit, itemToSwap, match)
-                  if (newItem) {
-                      const newOutfit = day.outfit.map(i => i.id === itemToSwap.id ? newItem : i)
-                      return { ...day, outfit: newOutfit }
-                  }
+              const available = wardrobeItems.filter(
+                i => isSwapCandidateStatus(i.status) && i.category === itemToSwap.category && i.id !== itemToSwap.id,
+              )
+              const ctx = plannerEventToEngineContext(eventType)
+              if (available.length > 0) {
+                const newItem = bestSwapForAppOutfit(
+                  skinToneHex,
+                  wardrobeItems,
+                  day.outfit,
+                  itemToSwap,
+                  available,
+                  { eventType: ctx.eventType, formality: ctx.formality },
+                )
+                if (newItem) {
+                  const newOutfit = day.outfit.map(i => i.id === itemToSwap.id ? newItem : i)
+                  return { ...day, outfit: newOutfit }
+                }
               }
           }
           return day
@@ -171,7 +218,12 @@ export function WardrobePlannerView() {
        // Auto-generate immediately if flipped to OUT in review phase
        setWeekPlan(prev => prev.map(d => {
          if (d.id === id && !d.outfit) {
-            return { ...d, outfit: generateSingleOutfit(d.eventType) }
+            return {
+              ...d,
+              outfit: generateSingleOutfit(d.eventType, d.id, {
+                resetVariant: true,
+              }),
+            }
          }
          return d
        }))
@@ -179,13 +231,14 @@ export function WardrobePlannerView() {
   }
 
   const handleSaveState = () => {
-    localStorage.setItem("lifeos_wardrobe_plan", JSON.stringify(weekPlan))
+    localStorage.setItem(WARDROBE_PLAN_STORAGE_KEY, JSON.stringify(weekPlan))
+    window.dispatchEvent(new Event("wardrobe-plan-updated"))
     toast("Plan saved securely", { description: "Your wardrobe choices are in the bag." })
   }
 
   const handleClearPlan = () => {
     if (confirm("Are you sure you want to clear your entire week plan?")) {
-      localStorage.removeItem("lifeos_wardrobe_plan")
+      localStorage.removeItem(WARDROBE_PLAN_STORAGE_KEY)
       setWeekPlan(getInitialWeek())
       setPhase('setup')
     }
@@ -197,7 +250,21 @@ export function WardrobePlannerView() {
     weekPlan.forEach(day => {
       if (day.goingOut && day.outfit) {
         const summary = `Outfit: ${day.eventType.replace('_', ' ').toUpperCase()}`
-        const description = `Outfit Details:\\n` + day.outfit.map(item => `- ${item.title} (Color: ${item.primary_color})`).join('\\n')
+        const pe = plannerEventToEngineContext(day.eventType)
+        const engine = appWardrobeToEngineItems(day.outfit)
+        const rec = evaluateOutfitRecommendation(
+          skinToneHex,
+          engine,
+          pe.eventType,
+          pe.formality,
+        )
+        const reasonLine = rec
+          ? `\\nEngine: ${rec.paletteType} (${rec.score.toFixed(1)}) — ${rec.reason}`
+          : ""
+        const description =
+          `Outfit Details:\\n` +
+          day.outfit.map((item) => `- ${item.title} (Color: ${item.primary_color})`).join("\\n") +
+          reasonLine
         
         const d = new Date(day.fullDate)
         // Set event time to 9 AM
@@ -238,8 +305,35 @@ export function WardrobePlannerView() {
 
   if (!weekPlan.length) return null // loading state
 
+  const manualBuildDay = manualBuildDayId
+    ? weekPlan.find((d) => d.id === manualBuildDayId)
+    : null
+
   return (
     <div className="space-y-6 pb-24">
+      <WardrobePlannerManualLookDialog
+        open={manualBuildDayId !== null}
+        onOpenChange={(o) => !o && setManualBuildDayId(null)}
+        wardrobeItems={wardrobeItems}
+        initialOutfit={manualBuildDay?.outfit ?? null}
+        onApply={(outfit) => {
+          if (!manualBuildDayId) return
+          setWeekPlan((prev) =>
+            prev.map((d) =>
+              d.id === manualBuildDayId ? { ...d, outfit } : d,
+            ),
+          )
+          setManualBuildDayId(null)
+          const hasCore = [Category.Tops, Category.Bottoms, Category.Footwear].every(
+            (cat) => outfit.some((i) => i.category === cat),
+          )
+          toast("Look applied", {
+            description: hasCore
+              ? "Swap pieces or run the engine any time."
+              : "Swap pieces or run the engine any time. Add top, bottom, and shoes for a full outfit.",
+          })
+        }}
+      />
       {/* Header */}
       <div className="flex justify-between items-end border-b-2 border-primary pb-2">
         <div className="flex flex-col">
@@ -315,7 +409,7 @@ export function WardrobePlannerView() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {EVENT_OPTIONS.map(opt => (
+                        {PLANNER_EVENT_OPTIONS.map((opt) => (
                           <SelectItem key={opt.value} value={opt.value} className="font-bold uppercase text-[10px] tracking-widest">
                             {opt.label}
                           </SelectItem>
@@ -384,15 +478,13 @@ export function WardrobePlannerView() {
                     <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Event Style</span>
                     <Select 
                       value={day.eventType} 
-                      onValueChange={(val) => {
-                        updateDay(day.id, { eventType: val })
-                      }}
+                      onValueChange={(val) => setDayEventTypeInReview(day.id, val)}
                     >
                       <SelectTrigger className="w-[160px] h-8 border-2 font-bold uppercase text-[10px] tracking-widest">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {EVENT_OPTIONS.map(opt => (
+                        {PLANNER_EVENT_OPTIONS.map((opt) => (
                           <SelectItem key={opt.value} value={opt.value} className="font-bold uppercase text-[10px] tracking-widest">
                             {opt.label}
                           </SelectItem>
@@ -404,78 +496,75 @@ export function WardrobePlannerView() {
                   {/* Outfit Area */}
                   {day.outfit ? (
                     <div className="pt-2 border-t-2 border-dashed border-primary/10">
-                      <div className="flex justify-between items-center mb-2">
+                      <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
                         <span className="text-[8px] font-black uppercase tracking-widest text-primary flex items-center gap-1">
                           <Sparkles size={10} />
-                          Assigned Look
+                          Planned look
                         </span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleRegenerateDay(day.id, day.eventType)}
-                          className="h-6 px-1 text-[8px] font-bold uppercase tracking-widest text-muted-foreground hover:text-black"
-                          disabled={spinningDays[day.id]}
-                        >
-                          <RefreshCcw size={10} className={`mr-1 ${spinningDays[day.id] ? 'animate-spin' : ''}`} />
-                          Swap Whole Look
-                        </Button>
+                        <div className="flex flex-wrap gap-1 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setManualBuildDayId(day.id)}
+                            className="h-6 px-2 text-[8px] font-bold uppercase tracking-widest border-2"
+                          >
+                            <LayoutGrid size={10} className="mr-1 shrink-0" />
+                            Build look
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRegenerateDay(day.id, day.eventType)}
+                            className="h-6 px-1 text-[8px] font-bold uppercase tracking-widest text-muted-foreground hover:text-black"
+                            disabled={spinningDays[day.id]}
+                          >
+                            <RefreshCcw size={10} className={`mr-1 ${spinningDays[day.id] ? "animate-spin" : ""}`} />
+                            Engine
+                          </Button>
+                        </div>
                       </div>
 
-                      {/* Composition Engine Feedback */}
-                      {(() => {
-                        const { palette, ruleName } = analyzeOutfit(day.outfit)
-                        return (
-                          <div className="mb-3 px-2 py-2 bg-muted/10 border-2 border-primary/20 flex items-center justify-between">
-                            <div className="flex flex-col gap-1">
-                              <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Color Engine</span>
-                              <span className="text-[9px] font-black uppercase tracking-widest text-primary leading-none">
-                                Rule: {ruleName}
-                              </span>
-                            </div>
-                            <div className="flex border-2 border-black/80 shadow-sm bg-black/80">
-                              {palette.map((colorHex, idx) => (
-                                <div 
-                                  key={idx} 
-                                  className="w-4 h-4" 
-                                  style={{ backgroundColor: colorHex }} 
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        )
-                      })()}
-                      
-                      <div className={`grid ${day.outfit.length > 3 ? 'grid-cols-4' : 'grid-cols-3'} gap-2`}>
-                        {day.outfit.map(item => (
-                          <div 
-                            key={item.id} 
-                            className="group p-1 flex flex-col border-2 border-primary/10 bg-muted/10 cursor-pointer hover:border-primary/50 transition-colors relative"
-                            onClick={() => handleSwapSingleItem(day.id, item, day.eventType)}
-                            title="Click to swap this item"
-                          >
-                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 z-10 bg-primary/10 p-1 rounded-full text-primary backdrop-blur-sm transition-opacity">
-                               <RefreshCcw size={10} />
-                            </div>
-                            <div className="aspect-[4/5] bg-muted w-full mb-1 border border-border">
-                              <img src={item.image_url} alt={item.title} className="object-cover w-full h-full mix-blend-multiply" />
-                            </div>
-                            <span className="font-bold uppercase text-[8px] line-clamp-2 leading-tight tracking-tight px-1 mb-1 group-hover:text-primary transition-colors">
-                              {item.title}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-[7px] font-bold text-muted-foreground uppercase text-center mt-2 tracking-widest opacity-60">
-                        Tap any item to swap it manually
-                      </p>
+                      <Card className="p-4 border-2 border-primary/20 bg-muted/5">
+                        <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mb-3 leading-snug">
+                          Outfit breakdown — palette, engine score &amp; skin-tone composition for this day.
+                        </p>
+                        <WardrobePlannedOutfitDetail
+                          outfit={day.outfit}
+                          skinTone={skinToneHex}
+                          plannerEventKey={day.eventType}
+                          onItemClick={(item) => handleSwapSingleItem(day.id, item, day.eventType)}
+                          tapHint="Tap any piece to swap it"
+                        />
+                      </Card>
                     </div>
                   ) : (
-                    <div className="pt-2 cursor-pointer group" onClick={() => handleRegenerateDay(day.id, day.eventType)}>
-                      <div className="border-2 border-dashed border-primary/20 py-4 flex flex-col items-center justify-center gap-1 group-hover:bg-primary/5 transition-colors">
-                        <Sparkles size={16} className="text-muted-foreground group-hover:text-primary transition-colors" />
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
-                          Tap To Generate Outfit
-                        </span>
+                    <div className="pt-2 space-y-2">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-auto min-h-14 border-2 py-3 flex flex-col items-center justify-center gap-1 font-black uppercase"
+                          onClick={() => setManualBuildDayId(day.id)}
+                        >
+                          <LayoutGrid size={16} className="text-primary" />
+                          <span className="text-[9px] tracking-widest">Build look manually</span>
+                          <span className="text-[7px] font-bold text-muted-foreground normal-case tracking-normal px-1">
+                            Type, color, saved looks
+                          </span>
+                        </Button>
+                        <button
+                          type="button"
+                          className="border-2 border-dashed border-primary/20 py-3 flex flex-col items-center justify-center gap-1 hover:bg-primary/5 transition-colors rounded-md"
+                          onClick={() => handleRegenerateDay(day.id, day.eventType)}
+                        >
+                          <Sparkles size={16} className="text-muted-foreground" />
+                          <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                            Engine suggestion
+                          </span>
+                          <span className="text-[7px] font-bold text-muted-foreground normal-case tracking-normal px-1">
+                            Rules-first ranked pick
+                          </span>
+                        </button>
                       </div>
                     </div>
                   )}
